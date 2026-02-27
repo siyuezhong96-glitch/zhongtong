@@ -274,17 +274,18 @@
                 <table class="data-table" id="rebateTable">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">序号</th>
-                            <th style="width: 120px;">提报日期</th>
+                            <th style="width: 60px;">序号</th>
                             <th style="width: 100px;">采购经理</th>
-                            <th style="width: 130px;">返利类型</th>
-                            <th style="width: 130px;">返利金额（元）</th>
-                            <th style="width: 150px;">供应商名称</th>
-                            <th style="width: 150px;">供货车型</th>
-                            <th style="width: 120px;">业务发生期间</th>
-                            <th style="width: 120px;">签署时间</th>
-                            <th style="width: 200px;">备注</th>
-                            <th style="width: 80px;">操作</th>
+                            <th style="width: 120px;">返利类型</th>
+                            <th style="width: 120px;">返利金额（元）</th>
+                            <th style="width: 160px;">供应商名称</th>
+                            <th style="width: 130px;">供货车型</th>
+                            <th style="width: 130px;">推荐落地车型</th>
+                            <th style="width: 130px;">推荐落地时间</th>
+                            <th style="width: 120px;">最早签署时间</th>
+                            <th style="width: 120px;">最迟签署时间</th>
+                            <th style="width: 180px;">备注</th>
+                            <th style="width: 70px;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="rebateTableBody">
@@ -453,14 +454,15 @@
         function addRebateRow() {
             rebateData.push({
                 id: rebateIdCounter++,
-                date: '',
                 manager: '',
                 type: '',
                 amount: '',
                 supplier: '',
                 vehicles: '',
-                period: '',
-                signDate: '',
+                recommendedVehicles: '',
+                recommendedTime: '',
+                earliestSignQuarter: '',
+                latestSignQuarter: '',
                 note: ''
             });
             renderRebateTable();
@@ -481,7 +483,7 @@
         function renderRebateTable() {
             const tbody = document.getElementById('rebateTableBody');
             if (rebateData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff69b4;">暂无数据，点击上方按钮添加返利记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#ff69b4;">暂无数据,点击上方按钮添加返利记录</td></tr>';
                 return;
             }
 
@@ -489,20 +491,21 @@
             rebateData.forEach((item, index) => {
                 html += `<tr>
                     <td>${index + 1}</td>
-                    <td><input type="date" value="${item.date}" onchange="updateRebateField(${item.id}, 'date', this.value)"></td>
-                    <td><input type="text" value="${item.manager}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名"></td>
+                    <td><input type="text" value="${item.manager || ''}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名"></td>
                     <td>
                         <select onchange="updateRebateField(${item.id}, 'type', this.value)">
                             <option value="">请选择</option>
                             ${rebateTypes.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
                         </select>
                     </td>
-                    <td><input type="number" value="${item.amount}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01"></td>
-                    <td><input type="text" value="${item.supplier}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商"></td>
-                    <td><input type="text" value="${item.vehicles}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02"></td>
-                    <td><input type="text" value="${item.period}" onchange="updateRebateField(${item.id}, 'period', this.value)" placeholder="202601"></td>
-                    <td><input type="date" value="${item.signDate}" onchange="updateRebateField(${item.id}, 'signDate', this.value)"></td>
-                    <td><input type="text" value="${item.note}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
+                    <td><input type="number" value="${item.amount || ''}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01"></td>
+                    <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商"></td>
+                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02"></td>
+                    <td><input type="text" value="${item.recommendedVehicles || ''}" onchange="updateRebateField(${item.id}, 'recommendedVehicles', this.value)" placeholder="X01,X02"></td>
+                    <td><input type="text" value="${item.recommendedTime || ''}" onchange="updateRebateField(${item.id}, 'recommendedTime', this.value)" placeholder="2026.Q1"></td>
+                    <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1"></td>
+                    <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2"></td>
+                    <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
                     <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
                 </tr>`;
             });
