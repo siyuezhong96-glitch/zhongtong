@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>车型资金缺口管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #ffd6e8 50%, #ffb3d9 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            color: #ff69b4;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(255, 105, 180, 0.3);
+        }
+
+        .subtitle {
+            color: #ff1493;
+            font-size: 1.1em;
+        }
+
+        .vehicles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .vehicle-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.6s ease-out;
+            animation-fill-mode: both;
+        }
+
+        .vehicle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(255, 105, 180, 0.3);
+        }
+
+        .vehicle-card:nth-child(1) { animation-delay: 0.1s; }
+        .vehicle-card:nth-child(2) { animation-delay: 0.2s; }
+        .vehicle-card:nth-child(3) { animation-delay: 0.3s; }
+        .vehicle-card:nth-child(4) { animation-delay: 0.4s; }
+        .vehicle-card:nth-child(5) { animation-delay: 0.5s; }
+        .vehicle-card:nth-child(6) { animation-delay: 0.6s; }
+        .vehicle-card:nth-child(7) { animation-delay: 0.7s; }
+
+        .vehicle-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .vehicle-icon {
+            font-size: 3em;
+            margin-right: 15px;
+            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .vehicle-name {
+            font-size: 1.5em;
+            color: #ff1493;
+            font-weight: bold;
+        }
+
+        .input-group {
+            margin-top: 15px;
+        }
+
+        .input-label {
+            display: block;
+            color: #ff69b4;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ffc0cb;
+            border-radius: 10px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            background: #fff5f8;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #ff69b4;
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
+        }
+
+        .saved-indicator {
+            display: none;
+            color: #ff69b4;
+            font-size: 0.85em;
+            margin-top: 5px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .saved-indicator.show {
+            display: block;
+        }
+
+        .summary-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
+            animation: fadeInUp 0.8s ease-out;
+            animation-delay: 0.8s;
+            animation-fill-mode: both;
+        }
+
+        .summary-title {
+            font-size: 1.8em;
+            color: #ff1493;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe4f0 100%);
+            border-radius: 15px;
+            border: 2px solid #ffc0cb;
+        }
+
+        .summary-label {
+            color: #ff69b4;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            color: #ff1493;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .clear-button {
+            display: block;
+            margin: 30px auto 0;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+        }
+
+        .clear-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(255, 105, 180, 0.4);
+        }
+
+        .clear-button:active {
+            transform: scale(0.98);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .vehicles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚗 车型资金缺口管理系统</h1>
+            <p class="subtitle">输入各车型资金缺口，系统自动保存</p>
+        </header>
+
+        <div class="vehicles-grid">
+            <!-- X01 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚙</div>
+                    <div class="vehicle-name">X01</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="X01" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- X02 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚕</div>
+                    <div class="vehicle-name">X02</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="X02" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- X03 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚗</div>
+                    <div class="vehicle-name">X03</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="X03" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- X04 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚘</div>
+                    <div class="vehicle-name">X04</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="X04" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- W01 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚐</div>
+                    <div class="vehicle-name">W01</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="W01" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- W02 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚚</div>
+                    <div class="vehicle-name">W02</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="W02" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+
+            <!-- W04 -->
+            <div class="vehicle-card">
+                <div class="vehicle-header">
+                    <div class="vehicle-icon">🚛</div>
+                    <div class="vehicle-name">W04</div>
+                </div>
+                <div class="input-group">
+                    <label class="input-label">资金缺口（万元）</label>
+                    <input type="number" class="input-field" data-vehicle="W04" placeholder="请输入金额">
+                    <div class="saved-indicator">✓ 已保存</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="summary-section">
+            <h2 class="summary-title">📊 资金缺口统计</h2>
+            <div class="summary-content">
+                <div class="summary-item">
+                    <div class="summary-label">总资金缺口</div>
+                    <div class="summary-value" id="totalGap">0</div>
+                    <div class="summary-label">万元</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">已填写车型</div>
+                    <div class="summary-value" id="filledCount">0</div>
+                    <div class="summary-label">/ 7</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">平均缺口</div>
+                    <div class="summary-value" id="avgGap">0</div>
+                    <div class="summary-label">万元</div>
+                </div>
+            </div>
+            <button class="clear-button" onclick="clearAllData()">清除所有数据</button>
+        </div>
+    </div>
+
+    <script>
+        // 车型列表
+        const vehicles = ['X01', 'X02', 'X03', 'X04', 'W01', 'W02', 'W04'];
+
+        // 页面加载时读取保存的数据
+        window.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            updateSummary();
+        });
+
+        // 为所有输入框添加事件监听
+        document.querySelectorAll('.input-field').forEach(input => {
+            input.addEventListener('input', function() {
+                saveData(this.dataset.vehicle, this.value);
+                showSavedIndicator(this);
+                updateSummary();
+            });
+        });
+
+        // 保存数据到localStorage
+        function saveData(vehicle, value) {
+            localStorage.setItem(`vehicle_gap_${vehicle}`, value);
+        }
+
+        // 从localStorage加载数据
+        function loadData() {
+            vehicles.forEach(vehicle => {
+                const value = localStorage.getItem(`vehicle_gap_${vehicle}`);
+                if (value) {
+                    const input = document.querySelector(`[data-vehicle="${vehicle}"]`);
+                    input.value = value;
+                }
+            });
+        }
+
+        // 显示保存提示
+        function showSavedIndicator(input) {
+            const indicator = input.parentElement.querySelector('.saved-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+
+        // 更新统计信息
+        function updateSummary() {
+            let total = 0;
+            let filledCount = 0;
+
+            vehicles.forEach(vehicle => {
+                const value = localStorage.getItem(`vehicle_gap_${vehicle}`);
+                if (value && value !== '') {
+                    total += parseFloat(value);
+                    filledCount++;
+                }
+            });
+
+            const avg = filledCount > 0 ? (total / filledCount).toFixed(2) : 0;
+
+            document.getElementById('totalGap').textContent = total.toFixed(2);
+            document.getElementById('filledCount').textContent = filledCount;
+            document.getElementById('avgGap').textContent = avg;
+        }
+
+        // 清除所有数据
+        function clearAllData() {
+            if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
+                vehicles.forEach(vehicle => {
+                    localStorage.removeItem(`vehicle_gap_${vehicle}`);
+                    const input = document.querySelector(`[data-vehicle="${vehicle}"]`);
+                    input.value = '';
+                });
+                updateSummary();
+                alert('所有数据已清除！');
+            }
+        }
+    </script>
+</body>
+</html>
