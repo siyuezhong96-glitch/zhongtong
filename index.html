@@ -295,6 +295,38 @@
             </div>
         </div>
 
+        <!-- 模块3: 返利分配结果 -->
+        <div class="section">
+            <h2 class="section-title">3. 返利分配结果</h2>
+            <button class="add-button" onclick="renderAllocationTable()">🔄 执行智能分配</button>
+            <div class="table-wrapper">
+                <table class="data-table" id="allocationTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 120px;">车型</th>
+                            <th>2026 Q1</th>
+                            <th>2026 Q2</th>
+                            <th>2026 Q3</th>
+                            <th>2026 Q4</th>
+                            <th>合计</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allocationTableBody">
+                        <tr><td colspan="6" style="text-align:center;color:#ff69b4;">点击上方按钮执行智能分配</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="margin-top: 15px; padding: 15px; background: #fff5f8; border-radius: 10px; border: 2px solid #ffc0cb;">
+                <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
+                <ul style="color: #ff69b4; line-height: 1.8;">
+                    <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
+                    <li>返利金额按缺口比例智能分配到匹配的车型-季度组合</li>
+                    <li>颜色说明：<span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">绿色=完全填充</span> <span style="background: #fff3cd; padding: 2px 8px; border-radius: 4px;">黄色=部分填充</span> <span style="background: #ffe4e1; padding: 2px 8px; border-radius: 4px;">浅红=少量填充</span></li>
+                    <li>鼠标悬停可查看该缺口的返利来源供应商</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- 统计汇总 -->
         <div class="summary-section">
             <h2 class="summary-title">📊 指标缺口与返利汇总</h2>
@@ -522,6 +554,163 @@
                     updateSummary();
                 }
             }
+        }
+
+        // ===== 返利分配算法 =====
+
+        // 解析季度字符串 (e.g., "2026.Q1" → "Q1")
+        function parseQuarter(quarterStr) {
+            if (!quarterStr) return null;
+            const match = quarterStr.match(/Q[1-4]/i);
+            return match ? match[0].toUpperCase() : null;
+        }
+
+        // 获取两个季度之间的所有季度
+        function getQuarterRange(startQ, endQ) {
+            if (!startQ || !endQ) return [];
+            const startIdx = quarters.indexOf(startQ);
+            const endIdx = quarters.indexOf(endQ);
+            if (startIdx === -1 || endIdx === -1) return [];
+
+            const result = [];
+            for (let i = startIdx; i <= endIdx; i++) {
+                result.push(quarters[i]);
+            }
+            return result;
+        }
+
+        // 执行智能分配
+        function performAllocation() {
+            // 1. 收集所有缺口数据
+            const gaps = {};
+            vehicles.forEach(vehicle => {
+                gaps[vehicle.code] = {};
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    const gapAmount = input && input.value ? parseFloat(input.value) : 0;
+                    gaps[vehicle.code][quarter] = {
+                        original: gapAmount,
+                        allocated: 0,
+                        sources: []
+                    };
+                });
+            });
+
+            // 2. 遍历返利记录，进行分配
+            rebateData.forEach(rebate => {
+                if (!rebate.amount || !rebate.vehicles) return;
+
+                const rebateAmount = parseFloat(rebate.amount);
+                if (rebateAmount <= 0) return;
+
+                // 解析供货车型
+                const rebateVehicles = rebate.vehicles.split(',').map(v => v.trim()).filter(v => v);
+                if (rebateVehicles.length === 0) return;
+
+                // 解析签署时间范围
+                const startQ = parseQuarter(rebate.earliestSignQuarter);
+                const endQ = parseQuarter(rebate.latestSignQuarter);
+                let applicableQuarters = [];
+
+                if (startQ && endQ) {
+                    applicableQuarters = getQuarterRange(startQ, endQ);
+                } else if (startQ) {
+                    applicableQuarters = [startQ];
+                } else if (endQ) {
+                    applicableQuarters = [endQ];
+                } else {
+                    // 如果没有指定时间，默认适用所有季度
+                    applicableQuarters = [...quarters];
+                }
+
+                // 找到所有匹配的车型-季度组合
+                const matches = [];
+                rebateVehicles.forEach(vehicleCode => {
+                    if (gaps[vehicleCode]) {
+                        applicableQuarters.forEach(quarter => {
+                            if (gaps[vehicleCode][quarter] && gaps[vehicleCode][quarter].original > 0) {
+                                matches.push({ vehicle: vehicleCode, quarter: quarter });
+                            }
+                        });
+                    }
+                });
+
+                // 如果没有匹配的缺口，跳过
+                if (matches.length === 0) return;
+
+                // 计算每个匹配组合的缺口总和，按比例分配返利
+                let totalMatchedGap = 0;
+                matches.forEach(m => {
+                    const remainingGap = gaps[m.vehicle][m.quarter].original - gaps[m.vehicle][m.quarter].allocated;
+                    totalMatchedGap += remainingGap;
+                });
+
+                // 按缺口比例分配返利金额
+                matches.forEach(m => {
+                    const remainingGap = gaps[m.vehicle][m.quarter].original - gaps[m.vehicle][m.quarter].allocated;
+                    const proportion = remainingGap / totalMatchedGap;
+                    const allocatedToThis = rebateAmount * proportion;
+
+                    gaps[m.vehicle][m.quarter].allocated += allocatedToThis;
+                    gaps[m.vehicle][m.quarter].sources.push({
+                        rebateId: rebate.id,
+                        supplier: rebate.supplier || '未知',
+                        amount: allocatedToThis
+                    });
+                });
+            });
+
+            return gaps;
+        }
+
+        // 渲染分配结果表格
+        function renderAllocationTable() {
+            const allocationResults = performAllocation();
+            const tbody = document.getElementById('allocationTableBody');
+
+            let html = '';
+            vehicles.forEach(vehicle => {
+                html += `<tr><td class="vehicle-label">${vehicle.icon} ${vehicle.name}</td>`;
+
+                quarters.forEach(quarter => {
+                    const data = allocationResults[vehicle.code][quarter];
+                    const remaining = data.original - data.allocated;
+                    const fillRate = data.original > 0 ? (data.allocated / data.original * 100).toFixed(1) : 0;
+
+                    // 根据填充情况设置背景色
+                    let bgColor = '#fff5f8';
+                    if (fillRate >= 100) {
+                        bgColor = '#d4edda'; // 绿色 - 完全填充
+                    } else if (fillRate >= 50) {
+                        bgColor = '#fff3cd'; // 黄色 - 部分填充
+                    } else if (fillRate > 0) {
+                        bgColor = '#ffe4e1'; // 浅红 - 少量填充
+                    }
+
+                    html += `<td style="background: ${bgColor}; padding: 8px; font-size: 0.85em;">
+                        <div><strong>原始:</strong> ¥${formatCurrency(data.original)}</div>
+                        <div style="color: #28a745;"><strong>分配:</strong> ¥${formatCurrency(data.allocated)}</div>
+                        <div style="color: ${remaining > 0 ? '#dc3545' : '#28a745'};"><strong>剩余:</strong> ¥${formatCurrency(remaining)}</div>
+                        ${data.sources.length > 0 ? `<div style="font-size: 0.8em; margin-top: 4px; color: #666;">来源: ${data.sources.map(s => s.supplier).join(', ')}</div>` : ''}
+                    </td>`;
+                });
+
+                // 计算该车型总计
+                let vehicleOriginal = 0, vehicleAllocated = 0;
+                quarters.forEach(q => {
+                    vehicleOriginal += allocationResults[vehicle.code][q].original;
+                    vehicleAllocated += allocationResults[vehicle.code][q].allocated;
+                });
+                const vehicleRemaining = vehicleOriginal - vehicleAllocated;
+
+                html += `<td class="total-cell" style="font-size: 0.85em;">
+                    <div>原始: ¥${formatCurrency(vehicleOriginal)}</div>
+                    <div style="color: #28a745;">分配: ¥${formatCurrency(vehicleAllocated)}</div>
+                    <div style="color: ${vehicleRemaining > 0 ? '#dc3545' : '#28a745'};">剩余: ¥${formatCurrency(vehicleRemaining)}</div>
+                </td></tr>`;
+            });
+
+            tbody.innerHTML = html;
         }
 
         // ===== 统计汇总 =====
