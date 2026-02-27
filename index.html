@@ -696,11 +696,27 @@ X03	1200000	2200000	3200000	4200000</div>
                 line = line.trim();
                 if (!line) return;
 
-                // 支持制表符、多个空格、逗号分隔
-                const parts = line.split(/[\t,]+|\s{2,}/).map(p => p.trim()).filter(p => p);
+                // 支持多种分隔符：制表符、逗号、空格（一个或多个）
+                let parts;
+                if (line.includes('\t')) {
+                    // 优先使用制表符分割（Excel默认格式）
+                    parts = line.split('\t').map(p => p.trim()).filter(p => p);
+                } else if (line.includes(',')) {
+                    // 使用逗号分割
+                    parts = line.split(',').map(p => p.trim()).filter(p => p);
+                } else {
+                    // 使用空格分割（支持一个或多个空格）
+                    parts = line.split(/\s+/).map(p => p.trim()).filter(p => p);
+                }
+
+                // 跳过表头行（如果包含"车型"、"Q1"等关键字）
+                const firstCol = parts[0].toUpperCase();
+                if (firstCol.includes('车型') || firstCol === 'Q1' || firstCol.includes('VEHICLE')) {
+                    return;
+                }
 
                 if (parts.length < 5) {
-                    errorLines.push(`第${index + 1}行：数据不完整（需要5列：车型名+4个季度数据）`);
+                    errorLines.push(`第${index + 1}行：数据不完整（需要5列：车型名+4个季度数据）\n  原始数据: ${line}\n  解析结果: ${parts.join(' | ')}`);
                     return;
                 }
 
@@ -713,7 +729,7 @@ X03	1200000	2200000	3200000	4200000</div>
                 // 检查车型是否存在
                 const vehicleExists = vehicles.some(v => v.code === vehicleCode);
                 if (!vehicleExists) {
-                    errorLines.push(`第${index + 1}行：车型 ${vehicleCode} 不存在`);
+                    errorLines.push(`第${index + 1}行：车型 "${vehicleCode}" 不存在（支持的车型：X01、X02、X03、X04、W01、W02、W04）`);
                     return;
                 }
 
@@ -724,7 +740,9 @@ X03	1200000	2200000	3200000	4200000</div>
                 quarters.forEach((quarter, i) => {
                     const input = document.querySelector(`[data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
                     if (input) {
-                        const value = parseFloat(values[i]);
+                        // 移除数字中的逗号（千位分隔符）
+                        const cleanValue = values[i].replace(/,/g, '');
+                        const value = parseFloat(cleanValue);
                         if (!isNaN(value)) {
                             input.value = value.toFixed(2);
                             saveData(vehicleCode, quarter, input.value);
