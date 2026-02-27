@@ -522,12 +522,12 @@
                         const line = lines[i].trim();
                         if (!line) continue;
 
-                        // 解析CSV行（不过滤空值和0）
+                        // 解析CSV行（不过滤空值和0，允许列数不足）
                         const parts = line.split(',').map(p => p.trim());
                         console.log(`第${i+1}行数据:`, parts); // 调试信息
 
-                        if (parts.length < 5) {
-                            errorLines.push(`第${i+1}行：列数不足（需要5列，实际${parts.length}列）`);
+                        if (parts.length < 1) {
+                            errorLines.push(`第${i+1}行：没有车型信息`);
                             continue;
                         }
 
@@ -535,20 +535,29 @@
                         const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
 
                         if (!vehicle) {
-                            errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在`);
+                            errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04）`);
                             continue;
                         }
 
-                        // 导入4个季度的数据
+                        // 导入4个季度的数据，缺失的列默认为0
                         quarters.forEach((quarter, idx) => {
-                            const value = parts[idx + 1];
-                            if (value !== undefined && value !== '') {
-                                const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                                if (input) {
+                            const value = parts[idx + 1]; // 可能为undefined
+                            const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+
+                            if (input) {
+                                if (value === undefined || value === '') {
+                                    // 缺失的列设为0
+                                    input.value = '0.00';
+                                    saveGapData(vehicle.code, quarter, '0.00');
+                                } else {
                                     const numValue = parseFloat(value);
                                     if (!isNaN(numValue)) {
                                         input.value = numValue.toFixed(2);
                                         saveGapData(vehicle.code, quarter, input.value);
+                                    } else {
+                                        // 无效数值也设为0
+                                        input.value = '0.00';
+                                        saveGapData(vehicle.code, quarter, '0.00');
                                     }
                                 }
                             }
@@ -561,8 +570,11 @@
                     updateSummary();
 
                     let message = `成功导入 ${importCount} 个车型的缺口数据！`;
-                    if (errorLines.length > 0) {
+                    if (errorLines.length > 0 && errorLines.length < 10) {
                         message += '\n\n跳过的行：\n' + errorLines.join('\n');
+                    } else if (errorLines.length >= 10) {
+                        message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
+                        console.log('跳过的行:', errorLines);
                     }
                     alert(message);
 
