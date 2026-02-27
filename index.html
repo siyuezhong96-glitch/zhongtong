@@ -731,24 +731,54 @@
             reader.onload = function(e) {
                 try {
                     const content = e.target.result;
-                    const lines = content.split('\n').filter(line => line.trim());
+                    console.log('返利文件内容:', content.substring(0, 300)); // 调试信息
+
+                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+                    console.log('返利总行数:', lines.length); // 调试信息
+
+                    if (lines.length === 0) {
+                        alert('文件为空，请检查文件内容！');
+                        return;
+                    }
 
                     // 跳过表头
                     let startIndex = 0;
                     if (lines[0].includes('采购经理') || lines[0].includes('返利类型')) {
                         startIndex = 1;
+                        console.log('检测到返利表头:', lines[0]); // 调试信息
                     }
 
+                    // 自动检测分隔符
+                    const sampleLine = lines[startIndex] || lines[0];
+                    const delimiter = detectDelimiter(sampleLine);
+                    console.log('返利数据检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
+
                     let importCount = 0;
+                    let errorLines = [];
+
                     for (let i = startIndex; i < lines.length; i++) {
                         const line = lines[i].trim();
                         if (!line) continue;
 
                         // 解析CSV行（支持带引号的字段）
-                        const parts = parseCSVLine(line);
-                        if (parts.length < 10) continue; // 至少需要10个字段
+                        let parts;
+                        if (delimiter === ',') {
+                            // 逗号分隔符需要特殊处理引号
+                            parts = parseCSVLine(line);
+                        } else {
+                            // 其他分隔符直接分割
+                            parts = line.split(delimiter).map(p => p.trim());
+                        }
 
-                        // 创建新的返利记录
+                        console.log(`返利第${i+1}行数据:`, parts); // 调试信息
+
+                        // 至少需要前4个必填字段：采购经理、返利类型、返利金额、供应商
+                        if (parts.length < 4) {
+                            errorLines.push(`第${i+1}行：字段数不足（至少需要4个字段，实际${parts.length}个）`);
+                            continue;
+                        }
+
+                        // 创建新的返利记录，缺失字段自动填空
                         rebateData.push({
                             id: rebateIdCounter++,
                             manager: parts[0] || '',
@@ -769,10 +799,19 @@
                     renderRebateTable();
                     saveRebateData();
                     updateSummary();
-                    alert(`成功导入 ${importCount} 条返利记录！`);
+
+                    let message = `成功导入 ${importCount} 条返利记录！`;
+                    if (errorLines.length > 0 && errorLines.length < 10) {
+                        message += '\n\n跳过的行：\n' + errorLines.join('\n');
+                    } else if (errorLines.length >= 10) {
+                        message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
+                        console.log('跳过的行:', errorLines);
+                    }
+                    alert(message);
+
                 } catch (error) {
-                    alert('导入失败，请确保文件格式正确！');
-                    console.error(error);
+                    alert('导入失败：' + error.message);
+                    console.error('导入错误:', error);
                 }
             };
             reader.readAsText(file, 'UTF-8');
