@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
         }
 
@@ -150,120 +150,92 @@
             display: block;
         }
 
-        .vehicles-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .vehicle-card {
+        .table-section {
             background: white;
             border-radius: 20px;
-            padding: 25px;
+            padding: 30px;
+            margin-bottom: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
-            transition: all 0.3s ease;
             animation: fadeInUp 0.6s ease-out;
-            animation-fill-mode: both;
+            overflow-x: auto;
         }
 
-        .vehicle-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(255, 105, 180, 0.3);
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
         }
 
-        .vehicle-card:nth-child(1) { animation-delay: 0.1s; }
-        .vehicle-card:nth-child(2) { animation-delay: 0.2s; }
-        .vehicle-card:nth-child(3) { animation-delay: 0.3s; }
-        .vehicle-card:nth-child(4) { animation-delay: 0.4s; }
-        .vehicle-card:nth-child(5) { animation-delay: 0.5s; }
-        .vehicle-card:nth-child(6) { animation-delay: 0.6s; }
-        .vehicle-card:nth-child(7) { animation-delay: 0.7s; }
-
-        .vehicle-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ffc0cb;
+        .data-table th {
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: white;
+            padding: 15px 10px;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid #ff1493;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .vehicle-icon {
-            font-size: 3em;
-            margin-right: 15px;
-            filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+        .data-table th:first-child {
+            border-top-left-radius: 12px;
         }
 
-        .vehicle-info {
-            flex: 1;
+        .data-table th:last-child {
+            border-top-right-radius: 12px;
         }
 
-        .vehicle-name {
+        .data-table .vehicle-header {
+            font-size: 1.2em;
+            padding: 20px 10px;
+        }
+
+        .data-table .vehicle-icon {
             font-size: 1.5em;
-            color: #ff1493;
-            font-weight: bold;
+            display: block;
             margin-bottom: 5px;
         }
 
-        .vehicle-total {
-            font-size: 0.9em;
-            color: #ff69b4;
-            font-weight: 500;
-        }
-
-        .quarters-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-
-        .quarter-item {
-            background: #fff5f8;
-            padding: 12px;
-            border-radius: 10px;
+        .data-table td {
+            padding: 8px;
             border: 2px solid #ffc0cb;
-            transition: all 0.3s ease;
+            background: #fff5f8;
+            text-align: center;
         }
 
-        .quarter-item:hover {
-            background: white;
-            border-color: #ff69b4;
-        }
-
-        .quarter-label {
-            display: block;
-            color: #ff69b4;
-            font-size: 0.85em;
-            margin-bottom: 6px;
+        .data-table td.quarter-label {
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe4f0 100%);
             font-weight: 600;
+            color: #ff1493;
+            font-size: 1.1em;
+            width: 100px;
         }
 
-        .input-field {
+        .data-table input {
             width: 100%;
             padding: 10px;
             border: 2px solid #ffc0cb;
             border-radius: 8px;
             font-size: 1em;
+            text-align: right;
             transition: all 0.3s ease;
             background: white;
         }
 
-        .input-field:focus {
+        .data-table input:focus {
             outline: none;
             border-color: #ff69b4;
-            box-shadow: 0 0 8px rgba(255, 105, 180, 0.2);
+            box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
         }
 
-        .saved-indicator {
-            display: none;
-            color: #ff69b4;
-            font-size: 0.75em;
-            margin-top: 3px;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .saved-indicator.show {
-            display: block;
+        .data-table .total-row {
+            background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%);
+            font-weight: 600;
+            color: #ff1493;
+            font-size: 1.05em;
+            padding: 12px;
         }
 
         .summary-section {
@@ -272,8 +244,6 @@
             padding: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
             animation: fadeInUp 0.8s ease-out;
-            animation-delay: 0.8s;
-            animation-fill-mode: both;
         }
 
         .summary-title {
@@ -309,36 +279,6 @@
             font-size: 1.6em;
             font-weight: bold;
             word-break: break-all;
-        }
-
-        .quarter-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px dashed #ffc0cb;
-        }
-
-        .quarter-summary-item {
-            text-align: center;
-            padding: 12px;
-            background: white;
-            border-radius: 12px;
-            border: 2px solid #ffc0cb;
-        }
-
-        .quarter-summary-label {
-            color: #ff69b4;
-            font-size: 0.85em;
-            margin-bottom: 6px;
-            font-weight: 600;
-        }
-
-        .quarter-summary-value {
-            color: #ff1493;
-            font-size: 1.3em;
-            font-weight: bold;
         }
 
         .clear-button {
@@ -386,26 +326,24 @@
             }
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
         @media (max-width: 768px) {
             h1 {
                 font-size: 2em;
             }
 
-            .vehicles-grid {
-                grid-template-columns: 1fr;
+            .table-section {
+                padding: 15px;
             }
 
-            .quarters-grid {
-                grid-template-columns: 1fr;
+            .data-table th,
+            .data-table td {
+                padding: 8px 4px;
+                font-size: 0.9em;
+            }
+
+            .data-table input {
+                padding: 6px;
+                font-size: 0.9em;
             }
         }
     </style>
@@ -444,8 +382,11 @@ X03	1200000	2200000	3200000	4200000</div>
             </div>
         </div>
 
-        <div class="vehicles-grid" id="vehiclesGrid">
-            <!-- 动态生成车型卡片 -->
+        <!-- 数据表格 -->
+        <div class="table-section">
+            <table class="data-table" id="dataTable">
+                <!-- 动态生成表格 -->
+            </table>
         </div>
 
         <div class="summary-section">
@@ -464,26 +405,6 @@ X03	1200000	2200000	3200000	4200000</div>
                     <div class="summary-value" id="avgGap">¥0.00</div>
                 </div>
             </div>
-
-            <div class="quarter-summary">
-                <div class="quarter-summary-item">
-                    <div class="quarter-summary-label">2026 Q1</div>
-                    <div class="quarter-summary-value" id="q1Total">¥0.00</div>
-                </div>
-                <div class="quarter-summary-item">
-                    <div class="quarter-summary-label">2026 Q2</div>
-                    <div class="quarter-summary-value" id="q2Total">¥0.00</div>
-                </div>
-                <div class="quarter-summary-item">
-                    <div class="quarter-summary-label">2026 Q3</div>
-                    <div class="quarter-summary-value" id="q3Total">¥0.00</div>
-                </div>
-                <div class="quarter-summary-item">
-                    <div class="quarter-summary-label">2026 Q4</div>
-                    <div class="quarter-summary-value" id="q4Total">¥0.00</div>
-                </div>
-            </div>
-
             <button class="clear-button" onclick="clearAllData()">清除所有数据</button>
         </div>
     </div>
@@ -509,52 +430,49 @@ X03	1200000	2200000	3200000	4200000</div>
             return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // 生成车型卡片
-        function generateVehicleCards() {
-            const grid = document.getElementById('vehiclesGrid');
-            grid.innerHTML = '';
+        // 生成数据表格
+        function generateDataTable() {
+            const table = document.getElementById('dataTable');
+            let html = '<thead><tr><th>季度</th>';
 
+            // 表头：车型列
             vehicles.forEach(vehicle => {
-                const card = document.createElement('div');
-                card.className = 'vehicle-card';
+                html += `<th class="vehicle-header">
+                    <span class="vehicle-icon">${vehicle.icon}</span>
+                    <span>${vehicle.name}</span>
+                </th>`;
+            });
+            html += '</tr></thead><tbody>';
 
-                let quartersHTML = '';
-                quarters.forEach(quarter => {
-                    quartersHTML += `
-                        <div class="quarter-item">
-                            <label class="quarter-label">2026 ${quarter}</label>
-                            <input type="number"
-                                   class="input-field"
-                                   data-vehicle="${vehicle.code}"
-                                   data-quarter="${quarter}"
-                                   placeholder="请输入金额（元）"
-                                   step="0.01">
-                            <div class="saved-indicator">✓ 已保存</div>
-                        </div>
-                    `;
+            // 数据行：每个季度一行
+            quarters.forEach(quarter => {
+                html += `<tr><td class="quarter-label">2026 ${quarter}</td>`;
+                vehicles.forEach(vehicle => {
+                    html += `<td>
+                        <input type="number"
+                               data-vehicle="${vehicle.code}"
+                               data-quarter="${quarter}"
+                               placeholder="0.00"
+                               step="0.01">
+                    </td>`;
                 });
-
-                card.innerHTML = `
-                    <div class="vehicle-header">
-                        <div class="vehicle-icon">${vehicle.icon}</div>
-                        <div class="vehicle-info">
-                            <div class="vehicle-name">${vehicle.name}</div>
-                            <div class="vehicle-total" id="${vehicle.code}-total">合计: ¥0.00</div>
-                        </div>
-                    </div>
-                    <div class="quarters-grid">
-                        ${quartersHTML}
-                    </div>
-                `;
-
-                grid.appendChild(card);
+                html += '</tr>';
             });
 
+            // 合计行
+            html += '<tr><td class="total-row quarter-label">合计</td>';
+            vehicles.forEach(vehicle => {
+                html += `<td class="total-row" id="${vehicle.code}-total">¥0.00</td>`;
+            });
+            html += '</tr>';
+
+            html += '</tbody>';
+            table.innerHTML = html;
+
             // 添加事件监听
-            document.querySelectorAll('.input-field').forEach(input => {
+            document.querySelectorAll('.data-table input').forEach(input => {
                 input.addEventListener('input', function() {
                     saveData(this.dataset.vehicle, this.dataset.quarter, this.value);
-                    showSavedIndicator(this);
                     updateVehicleTotal(this.dataset.vehicle);
                     updateSummary();
                 });
@@ -601,24 +519,14 @@ X03	1200000	2200000	3200000	4200000</div>
             });
             const totalElement = document.getElementById(`${vehicleCode}-total`);
             if (totalElement) {
-                totalElement.textContent = `合计: ¥${formatCurrency(total)}`;
+                totalElement.textContent = `¥${formatCurrency(total)}`;
             }
-        }
-
-        // 显示保存提示
-        function showSavedIndicator(input) {
-            const indicator = input.parentElement.querySelector('.saved-indicator');
-            indicator.classList.add('show');
-            setTimeout(() => {
-                indicator.classList.remove('show');
-            }, 2000);
         }
 
         // 更新统计信息
         function updateSummary() {
             let total = 0;
             let filledCount = 0;
-            const quarterTotals = { Q1: 0, Q2: 0, Q3: 0, Q4: 0 };
 
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
@@ -627,7 +535,6 @@ X03	1200000	2200000	3200000	4200000</div>
                         const value = parseFloat(input.value);
                         total += value;
                         filledCount++;
-                        quarterTotals[quarter] += value;
                     }
                 });
             });
@@ -638,12 +545,6 @@ X03	1200000	2200000	3200000	4200000</div>
             document.getElementById('totalGap').textContent = `¥${formatCurrency(total)}`;
             document.getElementById('filledCount').textContent = `${filledCount} / ${totalItems}`;
             document.getElementById('avgGap').textContent = `¥${formatCurrency(avg)}`;
-
-            // 更新各季度统计
-            document.getElementById('q1Total').textContent = `¥${formatCurrency(quarterTotals.Q1)}`;
-            document.getElementById('q2Total').textContent = `¥${formatCurrency(quarterTotals.Q2)}`;
-            document.getElementById('q3Total').textContent = `¥${formatCurrency(quarterTotals.Q3)}`;
-            document.getElementById('q4Total').textContent = `¥${formatCurrency(quarterTotals.Q4)}`;
         }
 
         // 清除所有数据
@@ -667,7 +568,7 @@ X03	1200000	2200000	3200000	4200000</div>
 
         // 页面加载时初始化
         window.addEventListener('DOMContentLoaded', function() {
-            generateVehicleCards();
+            generateDataTable();
             loadData();
             updateSummary();
         });
