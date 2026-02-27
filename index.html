@@ -41,6 +41,115 @@
             font-size: 1.1em;
         }
 
+        .import-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .import-title {
+            font-size: 1.3em;
+            color: #ff1493;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .import-textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #ffc0cb;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: #fff5f8;
+        }
+
+        .import-textarea:focus {
+            outline: none;
+            border-color: #ff69b4;
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
+        }
+
+        .import-help {
+            font-size: 0.85em;
+            color: #ff69b4;
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .import-example {
+            background: #ffe4f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #666;
+            margin: 10px 0;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .import-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .import-button {
+            padding: 10px 25px;
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
+        }
+
+        .import-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 105, 180, 0.4);
+        }
+
+        .import-button.secondary {
+            background: linear-gradient(135deg, #ffc0cb 0%, #ffb3d9 100%);
+        }
+
+        .toggle-import {
+            background: none;
+            border: 2px solid #ff69b4;
+            color: #ff69b4;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .toggle-import:hover {
+            background: #ff69b4;
+            color: white;
+        }
+
+        .import-content {
+            display: none;
+        }
+
+        .import-content.show {
+            display: block;
+        }
+
         .vehicles-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -308,6 +417,33 @@
             <p class="subtitle">输入各车型2026年季度资金缺口，系统自动保存</p>
         </header>
 
+        <!-- 批量导入区域 -->
+        <div class="import-section">
+            <button class="toggle-import" onclick="toggleImport()">📋 显示/隐藏批量导入</button>
+            <div class="import-content" id="importContent">
+                <div class="import-title">
+                    <span>📥</span>
+                    <span>从Excel批量导入数据</span>
+                </div>
+                <div class="import-help">
+                    💡 <strong>使用说明：</strong>在Excel中复制数据，然后粘贴到下方文本框中。格式：每行一个车型，列依次为：车型名称、Q1、Q2、Q3、Q4（用Tab或空格分隔）
+                </div>
+                <div class="import-example">示例格式：
+X01	1000000	2000000	3000000	4000000
+X02	1500000	2500000	3500000	4500000
+X03	1200000	2200000	3200000	4200000</div>
+                <textarea
+                    id="importData"
+                    class="import-textarea"
+                    placeholder="请粘贴Excel数据...&#10;格式示例：&#10;X01	1000000	2000000	3000000	4000000&#10;X02	1500000	2500000	3500000	4500000&#10;..."></textarea>
+                <div class="import-buttons">
+                    <button class="import-button" onclick="importData()">✅ 导入数据</button>
+                    <button class="import-button secondary" onclick="clearImportArea()">🗑️ 清空输入</button>
+                    <button class="import-button secondary" onclick="exportData()">📤 导出当前数据</button>
+                </div>
+            </div>
+        </div>
+
         <div class="vehicles-grid" id="vehiclesGrid">
             <!-- 动态生成车型卡片 -->
         </div>
@@ -535,6 +671,117 @@
             loadData();
             updateSummary();
         });
+
+        // 切换批量导入区域显示/隐藏
+        function toggleImport() {
+            const content = document.getElementById('importContent');
+            content.classList.toggle('show');
+        }
+
+        // 批量导入数据
+        function importData() {
+            const textarea = document.getElementById('importData');
+            const data = textarea.value.trim();
+
+            if (!data) {
+                alert('请先粘贴数据！');
+                return;
+            }
+
+            const lines = data.split('\n');
+            let successCount = 0;
+            let errorLines = [];
+
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (!line) return;
+
+                // 支持制表符、多个空格、逗号分隔
+                const parts = line.split(/[\t,]+|\s{2,}/).map(p => p.trim()).filter(p => p);
+
+                if (parts.length < 5) {
+                    errorLines.push(`第${index + 1}行：数据不完整（需要5列：车型名+4个季度数据）`);
+                    return;
+                }
+
+                const vehicleCode = parts[0].toUpperCase();
+                const q1 = parts[1];
+                const q2 = parts[2];
+                const q3 = parts[3];
+                const q4 = parts[4];
+
+                // 检查车型是否存在
+                const vehicleExists = vehicles.some(v => v.code === vehicleCode);
+                if (!vehicleExists) {
+                    errorLines.push(`第${index + 1}行：车型 ${vehicleCode} 不存在`);
+                    return;
+                }
+
+                // 填充数据
+                const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+                const values = [q1, q2, q3, q4];
+
+                quarters.forEach((quarter, i) => {
+                    const input = document.querySelector(`[data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
+                    if (input) {
+                        const value = parseFloat(values[i]);
+                        if (!isNaN(value)) {
+                            input.value = value.toFixed(2);
+                            saveData(vehicleCode, quarter, input.value);
+                        }
+                    }
+                });
+
+                updateVehicleTotal(vehicleCode);
+                successCount++;
+            });
+
+            updateSummary();
+
+            // 显示结果
+            let message = `✅ 成功导入 ${successCount} 条数据`;
+            if (errorLines.length > 0) {
+                message += `\n\n⚠️ 以下数据导入失败：\n${errorLines.join('\n')}`;
+            }
+            alert(message);
+
+            // 清空输入框
+            if (successCount > 0) {
+                textarea.value = '';
+            }
+        }
+
+        // 清空导入区域
+        function clearImportArea() {
+            document.getElementById('importData').value = '';
+        }
+
+        // 导出当前数据
+        function exportData() {
+            let exportText = '车型\tQ1\tQ2\tQ3\tQ4\n';
+
+            vehicles.forEach(vehicle => {
+                const values = [];
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`[data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    const value = input && input.value ? parseFloat(input.value).toFixed(2) : '0.00';
+                    values.push(value);
+                });
+                exportText += `${vehicle.code}\t${values.join('\t')}\n`;
+            });
+
+            // 复制到剪贴板
+            const textarea = document.getElementById('importData');
+            textarea.value = exportText;
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                alert('✅ 数据已导出到文本框并复制到剪贴板！\n你可以直接粘贴到Excel中。');
+            } catch (err) {
+                alert('✅ 数据已导出到文本框！\n请手动复制粘贴到Excel中。');
+            }
+        }
     </script>
 </body>
 </html>
