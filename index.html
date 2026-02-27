@@ -514,103 +514,120 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const content = e.target.result;
-                    console.log('文件内容:', content.substring(0, 200)); // 调试信息
+                    let content = e.target.result;
 
-                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-                    console.log('总行数:', lines.length); // 调试信息
-
-                    if (lines.length === 0) {
-                        alert('文件为空，请检查文件内容！');
+                    // 检查是否有乱码，尝试不同编码
+                    if (content.includes('�') || content.includes('ï¿½')) {
+                        console.log('检测到可能的编码问题，尝试GBK解码...');
+                        // 重新读取为GBK
+                        const readerGBK = new FileReader();
+                        readerGBK.onload = function(e2) {
+                            processGapData(e2.target.result);
+                        };
+                        readerGBK.readAsText(file, 'GBK');
                         return;
                     }
 
-                    // 跳过表头
-                    let startIndex = 0;
-                    if (lines[0].includes('车型') || lines[0].includes('Q1')) {
-                        startIndex = 1;
-                        console.log('检测到表头:', lines[0]); // 调试信息
-                    }
-
-                    // 自动检测分隔符
-                    const sampleLine = lines[startIndex] || lines[0];
-                    const delimiter = detectDelimiter(sampleLine);
-                    console.log('检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
-
-                    let importCount = 0;
-                    let errorLines = [];
-
-                    for (let i = startIndex; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
-
-                        // 使用检测到的分隔符解析CSV行
-                        const parts = line.split(delimiter).map(p => p.trim());
-                        console.log(`第${i+1}行数据:`, parts); // 调试信息
-
-                        if (parts.length < 1) {
-                            errorLines.push(`第${i+1}行：没有车型信息`);
-                            continue;
-                        }
-
-                        const vehicleCode = parts[0];
-                        const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
-
-                        if (!vehicle) {
-                            errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04）`);
-                            continue;
-                        }
-
-                        // 导入4个季度的数据，缺失的列默认为0
-                        quarters.forEach((quarter, idx) => {
-                            const value = parts[idx + 1]; // 可能为undefined
-                            const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-
-                            if (input) {
-                                if (value === undefined || value === '') {
-                                    // 缺失的列设为0
-                                    input.value = '0.00';
-                                    saveGapData(vehicle.code, quarter, '0.00');
-                                } else {
-                                    const numValue = parseFloat(value);
-                                    if (!isNaN(numValue)) {
-                                        input.value = numValue.toFixed(2);
-                                        saveGapData(vehicle.code, quarter, input.value);
-                                    } else {
-                                        // 无效数值也设为0
-                                        input.value = '0.00';
-                                        saveGapData(vehicle.code, quarter, '0.00');
-                                    }
-                                }
-                            }
-                        });
-
-                        updateVehicleTotal(vehicle.code);
-                        importCount++;
-                    }
-
-                    updateSummary();
-
-                    let message = `成功导入 ${importCount} 个车型的缺口数据！`;
-                    if (errorLines.length > 0 && errorLines.length < 10) {
-                        message += '\n\n跳过的行：\n' + errorLines.join('\n');
-                    } else if (errorLines.length >= 10) {
-                        message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
-                        console.log('跳过的行:', errorLines);
-                    }
-                    alert(message);
-
+                    processGapData(content);
                 } catch (error) {
                     alert('导入失败：' + error.message);
                     console.error('导入错误:', error);
                 }
             };
 
-            // 尝试多种编码读取
+            // 首先尝试UTF-8
             reader.readAsText(file, 'UTF-8');
 
             // 清空input，允许重复导入同一文件
             event.target.value = '';
+        }
+
+        // 处理指标缺口数据
+        function processGapData(content) {
+            console.log('文件内容:', content.substring(0, 200)); // 调试信息
+
+            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+            console.log('总行数:', lines.length); // 调试信息
+
+            if (lines.length === 0) {
+                alert('文件为空，请检查文件内容！');
+                return;
+            }
+
+            // 跳过表头
+            let startIndex = 0;
+            if (lines[0].includes('车型') || lines[0].includes('Q1')) {
+                startIndex = 1;
+                console.log('检测到表头:', lines[0]); // 调试信息
+            }
+
+            // 自动检测分隔符
+            const sampleLine = lines[startIndex] || lines[0];
+            const delimiter = detectDelimiter(sampleLine);
+            console.log('检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
+
+            let importCount = 0;
+            let errorLines = [];
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // 使用检测到的分隔符解析CSV行
+                const parts = line.split(delimiter).map(p => p.trim());
+                console.log(`第${i+1}行数据:`, parts); // 调试信息
+
+                if (parts.length < 1) {
+                    errorLines.push(`第${i+1}行：没有车型信息`);
+                    continue;
+                }
+
+                const vehicleCode = parts[0];
+                const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
+
+                if (!vehicle) {
+                    errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04）`);
+                    continue;
+                }
+
+                // 导入4个季度的数据，缺失的列默认为0
+                quarters.forEach((quarter, idx) => {
+                    const value = parts[idx + 1]; // 可能为undefined
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+
+                    if (input) {
+                        if (value === undefined || value === '') {
+                            // 缺失的列设为0
+                            input.value = '0.00';
+                            saveGapData(vehicle.code, quarter, '0.00');
+                        } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                                input.value = numValue.toFixed(2);
+                                saveGapData(vehicle.code, quarter, input.value);
+                            } else {
+                                // 无效数值也设为0
+                                input.value = '0.00';
+                                saveGapData(vehicle.code, quarter, '0.00');
+                            }
+                        }
+                    }
+                });
+
+                updateVehicleTotal(vehicle.code);
+                importCount++;
+            }
+
+            updateSummary();
+
+            let message = `成功导入 ${importCount} 个车型的缺口数据！`;
+            if (errorLines.length > 0 && errorLines.length < 10) {
+                message += '\n\n跳过的行：\n' + errorLines.join('\n');
+            } else if (errorLines.length >= 10) {
+                message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
+                console.log('跳过的行:', errorLines);
+            }
+            alert(message);
         }
 
         // ===== 模块2: 返利情况 =====
@@ -740,87 +757,21 @@
             reader.onload = function(e) {
                 console.log('=== 文件读取完成 ===');
                 try {
-                    const content = e.target.result;
-                    console.log('返利文件内容:', content.substring(0, 300)); // 调试信息
+                    let content = e.target.result;
 
-                    const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-                    console.log('返利总行数:', lines.length); // 调试信息
-
-                    if (lines.length === 0) {
-                        alert('文件为空，请检查文件内容！');
+                    // 检查是否有乱码，尝试不同编码
+                    if (content.includes('�') || content.includes('ï¿½')) {
+                        console.log('检测到可能的编码问题，尝试GBK解码...');
+                        // 重新读取为GBK
+                        const readerGBK = new FileReader();
+                        readerGBK.onload = function(e2) {
+                            processRebateData(e2.target.result);
+                        };
+                        readerGBK.readAsText(file, 'GBK');
                         return;
                     }
 
-                    // 跳过表头
-                    let startIndex = 0;
-                    if (lines[0].includes('采购经理') || lines[0].includes('返利类型')) {
-                        startIndex = 1;
-                        console.log('检测到返利表头:', lines[0]); // 调试信息
-                    }
-
-                    // 自动检测分隔符
-                    const sampleLine = lines[startIndex] || lines[0];
-                    const delimiter = detectDelimiter(sampleLine);
-                    console.log('返利数据检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
-
-                    let importCount = 0;
-                    let errorLines = [];
-
-                    for (let i = startIndex; i < lines.length; i++) {
-                        const line = lines[i].trim();
-                        if (!line) continue;
-
-                        // 解析CSV行（支持带引号的字段）
-                        let parts;
-                        if (delimiter === ',') {
-                            // 逗号分隔符需要特殊处理引号
-                            parts = parseCSVLine(line);
-                        } else {
-                            // 其他分隔符直接分割
-                            parts = line.split(delimiter).map(p => p.trim());
-                        }
-
-                        console.log(`返利第${i+1}行数据:`, parts); // 调试信息
-
-                        // 至少需要前4个必填字段：采购经理、返利类型、返利金额、供应商
-                        if (parts.length < 4) {
-                            errorLines.push(`第${i+1}行：字段数不足（至少需要4个字段，实际${parts.length}个）`);
-                            continue;
-                        }
-
-                        // 创建新的返利记录，缺失字段自动填空
-                        rebateData.push({
-                            id: rebateIdCounter++,
-                            manager: parts[0] || '',
-                            type: parts[1] || '',
-                            amount: parts[2] || '',
-                            supplier: parts[3] || '',
-                            vehicles: parts[4] || '',
-                            recommendedVehicles: parts[5] || '',
-                            recommendedTime: parts[6] || '',
-                            earliestSignQuarter: parts[7] || '',
-                            latestSignQuarter: parts[8] || '',
-                            note: parts[9] || ''
-                        });
-
-                        importCount++;
-                    }
-
-                    console.log('=== 导入完成，总共导入:', importCount, '条 ===');
-
-                    renderRebateTable();
-                    saveRebateData();
-                    updateSummary();
-
-                    let message = `成功导入 ${importCount} 条返利记录！`;
-                    if (errorLines.length > 0 && errorLines.length < 10) {
-                        message += '\n\n跳过的行：\n' + errorLines.join('\n');
-                    } else if (errorLines.length >= 10) {
-                        message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
-                        console.log('跳过的行:', errorLines);
-                    }
-                    alert(message);
-
+                    processRebateData(content);
                 } catch (error) {
                     alert('导入失败：' + error.message);
                     console.error('导入错误:', error);
@@ -830,6 +781,89 @@
 
             // 清空input，允许重复导入同一文件
             event.target.value = '';
+        }
+
+        // 处理返利记录数据
+        function processRebateData(content) {
+            console.log('返利文件内容:', content.substring(0, 300)); // 调试信息
+
+            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+            console.log('返利总行数:', lines.length); // 调试信息
+
+            if (lines.length === 0) {
+                alert('文件为空，请检查文件内容！');
+                return;
+            }
+
+            // 跳过表头
+            let startIndex = 0;
+            if (lines[0].includes('采购经理') || lines[0].includes('返利类型')) {
+                startIndex = 1;
+                console.log('检测到返利表头:', lines[0]); // 调试信息
+            }
+
+            // 自动检测分隔符
+            const sampleLine = lines[startIndex] || lines[0];
+            const delimiter = detectDelimiter(sampleLine);
+            console.log('返利数据检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
+
+            let importCount = 0;
+            let errorLines = [];
+
+            for (let i = startIndex; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+
+                // 解析CSV行（支持带引号的字段）
+                let parts;
+                if (delimiter === ',') {
+                    // 逗号分隔符需要特殊处理引号
+                    parts = parseCSVLine(line);
+                } else {
+                    // 其他分隔符直接分割
+                    parts = line.split(delimiter).map(p => p.trim());
+                }
+
+                console.log(`返利第${i+1}行数据:`, parts); // 调试信息
+
+                // 至少需要前4个必填字段：采购经理、返利类型、返利金额、供应商
+                if (parts.length < 4) {
+                    errorLines.push(`第${i+1}行：字段数不足（至少需要4个字段，实际${parts.length}个）`);
+                    continue;
+                }
+
+                // 创建新的返利记录，缺失字段自动填空
+                rebateData.push({
+                    id: rebateIdCounter++,
+                    manager: parts[0] || '',
+                    type: parts[1] || '',
+                    amount: parts[2] || '',
+                    supplier: parts[3] || '',
+                    vehicles: parts[4] || '',
+                    recommendedVehicles: parts[5] || '',
+                    recommendedTime: parts[6] || '',
+                    earliestSignQuarter: parts[7] || '',
+                    latestSignQuarter: parts[8] || '',
+                    note: parts[9] || ''
+                });
+
+                importCount++;
+            }
+
+            console.log('=== 导入完成，总共导入:', importCount, '条 ===');
+
+            renderRebateTable();
+            saveRebateData();
+            updateSummary();
+
+            let message = `成功导入 ${importCount} 条返利记录！`;
+            if (errorLines.length > 0 && errorLines.length < 10) {
+                message += '\n\n跳过的行：\n' + errorLines.join('\n');
+            } else if (errorLines.length >= 10) {
+                message += `\n\n跳过了 ${errorLines.length} 行，请查看控制台了解详情`;
+                console.log('跳过的行:', errorLines);
+            }
+            alert(message);
         }
 
         // 解析CSV行（处理带引号的字段）
