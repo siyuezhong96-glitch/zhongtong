@@ -724,11 +724,21 @@
 
         // 导入返利记录数据
         function importRebateData(event) {
+            console.log('=== 返利导入函数被调用 ==='); // 最早的调试点
+
             const file = event.target.files[0];
-            if (!file) return;
+            console.log('选择的文件:', file); // 检查文件是否被选中
+
+            if (!file) {
+                console.log('没有选择文件');
+                return;
+            }
+
+            console.log('文件名:', file.name, '文件大小:', file.size, '字节');
 
             const reader = new FileReader();
             reader.onload = function(e) {
+                console.log('=== 文件读取完成 ===');
                 try {
                     const content = e.target.result;
                     console.log('返利文件内容:', content.substring(0, 300)); // 调试信息
@@ -795,6 +805,8 @@
 
                         importCount++;
                     }
+
+                    console.log('=== 导入完成，总共导入:', importCount, '条 ===');
 
                     renderRebateTable();
                     saveRebateData();
