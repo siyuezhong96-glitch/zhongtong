@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1600px;
+            max-width: 1800px;
             margin: 0 auto;
         }
 
@@ -41,70 +41,92 @@
             font-size: 1.1em;
         }
 
-        .import-section {
+        .section {
             background: white;
             border-radius: 20px;
-            padding: 25px;
+            padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
-            animation: fadeInUp 0.5s ease-out;
+            animation: fadeInUp 0.6s ease-out;
         }
 
-        .import-title {
-            font-size: 1.3em;
+        .section-title {
+            font-size: 1.8em;
             color: #ff1493;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            margin-bottom: 20px;
+            font-weight: 600;
         }
 
-        .import-textarea {
+        .data-table {
             width: 100%;
-            min-height: 150px;
-            padding: 15px;
-            border: 2px solid #ffc0cb;
-            border-radius: 10px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95em;
-            resize: vertical;
-            transition: all 0.3s ease;
-            background: #fff5f8;
-        }
-
-        .import-textarea:focus {
-            outline: none;
-            border-color: #ff69b4;
-            background: white;
-            box-shadow: 0 0 10px rgba(255, 105, 180, 0.2);
-        }
-
-        .import-help {
-            font-size: 0.85em;
-            color: #ff69b4;
-            margin: 10px 0;
-            line-height: 1.6;
-        }
-
-        .import-example {
-            background: #ffe4f0;
-            padding: 10px;
-            border-radius: 8px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.85em;
-            color: #666;
-            margin: 10px 0;
-            white-space: pre;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 10px;
             overflow-x: auto;
         }
 
-        .import-buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 15px;
+        .data-table th {
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            color: white;
+            padding: 12px 10px;
+            font-weight: 600;
+            text-align: center;
+            border: 2px solid #ff1493;
+            font-size: 0.95em;
         }
 
-        .import-button {
+        .data-table th:first-child {
+            border-top-left-radius: 12px;
+        }
+
+        .data-table th:last-child {
+            border-top-right-radius: 12px;
+        }
+
+        .data-table td {
+            padding: 8px;
+            border: 2px solid #ffc0cb;
+            background: #fff5f8;
+            text-align: center;
+        }
+
+        .data-table td.vehicle-label {
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe4f0 100%);
+            font-weight: 600;
+            color: #ff1493;
+            font-size: 1.05em;
+        }
+
+        .data-table input, .data-table select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ffc0cb;
+            border-radius: 8px;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .data-table input:focus, .data-table select:focus {
+            outline: none;
+            border-color: #ff69b4;
+            box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
+        }
+
+        .data-table input[type="number"] {
+            text-align: right;
+        }
+
+        .data-table .total-cell {
+            background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%);
+            font-weight: 600;
+            color: #ff1493;
+            font-size: 1.05em;
+        }
+
+        .add-button {
+            display: inline-block;
+            margin: 15px 0;
             padding: 10px 25px;
             background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
             color: white;
@@ -116,140 +138,31 @@
             box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
         }
 
-        .import-button:hover {
+        .add-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 15px rgba(255, 105, 180, 0.4);
         }
 
-        .import-button.secondary {
-            background: linear-gradient(135deg, #ffc0cb 0%, #ffb3d9 100%);
-        }
-
-        .toggle-import {
-            background: none;
-            border: 2px solid #ff69b4;
-            color: #ff69b4;
-            padding: 8px 20px;
-            border-radius: 20px;
+        .delete-button {
+            padding: 4px 10px;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            border-radius: 8px;
             font-size: 0.9em;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-bottom: 20px;
         }
 
-        .toggle-import:hover {
-            background: #ff69b4;
-            color: white;
-        }
-
-        .import-content {
-            display: none;
-        }
-
-        .import-content.show {
-            display: block;
-        }
-
-        .table-section {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
-            animation: fadeInUp 0.6s ease-out;
-            overflow-x: auto;
-        }
-
-        .section-title {
-            font-size: 1.8em;
-            color: #ff1493;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 10px;
-        }
-
-        .data-table th {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            padding: 15px 10px;
-            font-weight: 600;
-            text-align: center;
-            border: 2px solid #ff1493;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .data-table th:first-child {
-            border-top-left-radius: 12px;
-        }
-
-        .data-table th:last-child {
-            border-top-right-radius: 12px;
-        }
-
-        .data-table .vehicle-header {
-            font-size: 1.2em;
-            padding: 20px 10px;
-        }
-
-        .data-table .vehicle-icon {
-            font-size: 1.5em;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        .data-table td {
-            padding: 8px;
-            border: 2px solid #ffc0cb;
-            background: #fff5f8;
-            text-align: center;
-        }
-
-        .data-table td.quarter-label {
-            background: linear-gradient(135deg, #fff5f8 0%, #ffe4f0 100%);
-            font-weight: 600;
-            color: #ff1493;
-            font-size: 1.1em;
-            width: 100px;
-        }
-
-        .data-table input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #ffc0cb;
-            border-radius: 8px;
-            font-size: 1em;
-            text-align: right;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .data-table input:focus {
-            outline: none;
-            border-color: #ff69b4;
-            box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
-        }
-
-        .data-table .total-row {
-            background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%);
-            font-weight: 600;
-            color: #ff1493;
-            font-size: 1.05em;
-            padding: 12px;
+        .delete-button:hover {
+            background: #ff1493;
         }
 
         .summary-section {
             background: white;
             border-radius: 20px;
             padding: 30px;
+            margin-bottom: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
             animation: fadeInUp 0.8s ease-out;
         }
@@ -286,30 +199,6 @@
             color: #ff1493;
             font-size: 1.6em;
             font-weight: bold;
-            word-break: break-all;
-        }
-
-        .clear-button {
-            display: block;
-            margin: 30px auto 0;
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-size: 1em;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 10px rgba(255, 105, 180, 0.3);
-        }
-
-        .clear-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(255, 105, 180, 0.4);
-        }
-
-        .clear-button:active {
-            transform: scale(0.98);
         }
 
         @keyframes fadeInDown {
@@ -339,20 +228,24 @@
                 font-size: 2em;
             }
 
-            .table-section {
+            .section {
                 padding: 15px;
             }
 
             .data-table th,
             .data-table td {
-                padding: 8px 4px;
-                font-size: 0.9em;
+                padding: 6px 4px;
+                font-size: 0.85em;
             }
 
-            .data-table input {
+            .data-table input, .data-table select {
                 padding: 6px;
-                font-size: 0.9em;
+                font-size: 0.85em;
             }
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -363,58 +256,65 @@
             <p class="subtitle">输入各车型2026年季度指标缺口，系统自动保存</p>
         </header>
 
-        <!-- 批量导入区域 -->
-        <div class="import-section">
-            <button class="toggle-import" onclick="toggleImport()">📋 显示/隐藏批量导入</button>
-            <div class="import-content" id="importContent">
-                <div class="import-title">
-                    <span>📥</span>
-                    <span>从Excel批量导入数据</span>
-                </div>
-                <div class="import-help">
-                    💡 <strong>使用说明：</strong>在Excel中复制数据，然后粘贴到下方文本框中。格式：每行一个车型，列依次为：车型名称、Q1、Q2、Q3、Q4（用Tab或空格分隔）
-                </div>
-                <div class="import-example">示例格式：
-X01	1000000	2000000	3000000	4000000
-X02	1500000	2500000	3500000	4500000
-X03	1200000	2200000	3200000	4200000</div>
-                <textarea
-                    id="importData"
-                    class="import-textarea"
-                    placeholder="请粘贴Excel数据...&#10;格式示例：&#10;X01	1000000	2000000	3000000	4000000&#10;X02	1500000	2500000	3500000	4500000&#10;..."></textarea>
-                <div class="import-buttons">
-                    <button class="import-button" onclick="importData()">✅ 导入数据</button>
-                    <button class="import-button secondary" onclick="clearImportArea()">🗑️ 清空输入</button>
-                    <button class="import-button secondary" onclick="exportData()">📤 导出当前数据</button>
-                </div>
+        <!-- 模块1: 当前指标缺口 -->
+        <div class="section">
+            <h2 class="section-title">1. 当前指标缺口</h2>
+            <div class="table-wrapper">
+                <table class="data-table" id="gapTable">
+                    <!-- 动态生成 -->
+                </table>
             </div>
         </div>
 
-        <!-- 数据表格 -->
-        <div class="table-section">
-            <h2 class="section-title">📋 当前指标缺口</h2>
-            <table class="data-table" id="dataTable">
-                <!-- 动态生成表格 -->
-            </table>
+        <!-- 模块2: 返利情况 -->
+        <div class="section">
+            <h2 class="section-title">2. 返利情况</h2>
+            <button class="add-button" onclick="addRebateRow()">➕ 添加返利记录</button>
+            <div class="table-wrapper">
+                <table class="data-table" id="rebateTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">序号</th>
+                            <th style="width: 120px;">提报日期</th>
+                            <th style="width: 100px;">采购经理</th>
+                            <th style="width: 130px;">返利类型</th>
+                            <th style="width: 130px;">返利金额（元）</th>
+                            <th style="width: 150px;">供应商名称</th>
+                            <th style="width: 150px;">供货车型</th>
+                            <th style="width: 120px;">业务发生期间</th>
+                            <th style="width: 120px;">签署时间</th>
+                            <th style="width: 200px;">备注</th>
+                            <th style="width: 80px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rebateTableBody">
+                        <!-- 动态生成 -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
+        <!-- 统计汇总 -->
         <div class="summary-section">
-            <h2 class="summary-title">📊 指标缺口统计</h2>
+            <h2 class="summary-title">📊 指标缺口与返利汇总</h2>
             <div class="summary-content">
                 <div class="summary-item">
                     <div class="summary-label">总指标缺口</div>
                     <div class="summary-value" id="totalGap">¥0.00</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-label">已填写项目</div>
-                    <div class="summary-value" id="filledCount">0 / 28</div>
+                    <div class="summary-label">总返利金额</div>
+                    <div class="summary-value" id="totalRebate">¥0.00</div>
                 </div>
                 <div class="summary-item">
-                    <div class="summary-label">平均缺口</div>
-                    <div class="summary-value" id="avgGap">¥0.00</div>
+                    <div class="summary-label">剩余缺口</div>
+                    <div class="summary-value" id="remainingGap">¥0.00</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-label">填充率</div>
+                    <div class="summary-value" id="fillRate">0%</div>
                 </div>
             </div>
-            <button class="clear-button" onclick="clearAllData()">清除所有数据</button>
         </div>
     </div>
 
@@ -432,56 +332,54 @@ X03	1200000	2200000	3200000	4200000</div>
 
         const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
-        // 格式化数字：添加千位分隔符和两位小数
+        // 返利类型选项
+        const rebateTypes = [
+            '一般一次性返利',
+            '阶梯返利',
+            '年度返利',
+            '其他'
+        ];
+
+        // 格式化数字
         function formatCurrency(value) {
             if (!value || value === '') return '0.00';
             const num = parseFloat(value);
             return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         }
 
-        // 生成数据表格
-        function generateDataTable() {
-            const table = document.getElementById('dataTable');
-            let html = '<thead><tr><th>季度</th>';
+        // ===== 模块1: 指标缺口表格 =====
+        function generateGapTable() {
+            const table = document.getElementById('gapTable');
+            let html = '<thead><tr><th style="width: 120px;">车型</th>';
 
-            // 表头：车型列
-            vehicles.forEach(vehicle => {
-                html += `<th class="vehicle-header">
-                    <span class="vehicle-icon">${vehicle.icon}</span>
-                    <span>${vehicle.name}</span>
-                </th>`;
+            // 表头：季度列
+            quarters.forEach(q => {
+                html += `<th>2026 ${q}</th>`;
             });
-            html += '</tr></thead><tbody>';
+            html += '<th>合计</th></tr></thead><tbody>';
 
-            // 数据行：每个季度一行
-            quarters.forEach(quarter => {
-                html += `<tr><td class="quarter-label">2026 ${quarter}</td>`;
-                vehicles.forEach(vehicle => {
+            // 数据行：每个车型一行
+            vehicles.forEach(vehicle => {
+                html += `<tr><td class="vehicle-label">${vehicle.icon} ${vehicle.name}</td>`;
+                quarters.forEach(q => {
                     html += `<td>
                         <input type="number"
                                data-vehicle="${vehicle.code}"
-                               data-quarter="${quarter}"
+                               data-quarter="${q}"
                                placeholder="0.00"
                                step="0.01">
                     </td>`;
                 });
-                html += '</tr>';
+                html += `<td class="total-cell" id="${vehicle.code}-total">¥0.00</td></tr>`;
             });
-
-            // 合计行
-            html += '<tr><td class="total-row quarter-label">合计</td>';
-            vehicles.forEach(vehicle => {
-                html += `<td class="total-row" id="${vehicle.code}-total">¥0.00</td>`;
-            });
-            html += '</tr>';
 
             html += '</tbody>';
             table.innerHTML = html;
 
             // 添加事件监听
-            document.querySelectorAll('.data-table input').forEach(input => {
+            document.querySelectorAll('#gapTable input').forEach(input => {
                 input.addEventListener('input', function() {
-                    saveData(this.dataset.vehicle, this.dataset.quarter, this.value);
+                    saveGapData(this.dataset.vehicle, this.dataset.quarter, this.value);
                     updateVehicleTotal(this.dataset.vehicle);
                     updateSummary();
                 });
@@ -494,20 +392,20 @@ X03	1200000	2200000	3200000	4200000</div>
             });
         }
 
-        // 保存数据到localStorage
-        function saveData(vehicle, quarter, value) {
-            const key = `vehicle_gap_${vehicle}_${quarter}`;
+        // 保存指标缺口数据
+        function saveGapData(vehicle, quarter, value) {
+            const key = `gap_${vehicle}_${quarter}`;
             localStorage.setItem(key, value);
         }
 
-        // 从localStorage加载数据
-        function loadData() {
+        // 加载指标缺口数据
+        function loadGapData() {
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const key = `vehicle_gap_${vehicle.code}_${quarter}`;
+                    const key = `gap_${vehicle.code}_${quarter}`;
                     const value = localStorage.getItem(key);
                     if (value) {
-                        const input = document.querySelector(`[data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                        const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
                         if (input) {
                             input.value = value;
                         }
@@ -517,11 +415,11 @@ X03	1200000	2200000	3200000	4200000</div>
             });
         }
 
-        // 更新单个车型的合计
+        // 更新单个车型合计
         function updateVehicleTotal(vehicleCode) {
             let total = 0;
             quarters.forEach(quarter => {
-                const input = document.querySelector(`[data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
+                const input = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
                 if (input && input.value) {
                     total += parseFloat(input.value);
                 }
@@ -532,184 +430,137 @@ X03	1200000	2200000	3200000	4200000</div>
             }
         }
 
-        // 更新统计信息
-        function updateSummary() {
-            let total = 0;
-            let filledCount = 0;
+        // ===== 模块2: 返利情况 =====
+        let rebateData = [];
+        let rebateIdCounter = 1;
 
-            vehicles.forEach(vehicle => {
-                quarters.forEach(quarter => {
-                    const input = document.querySelector(`[data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    if (input && input.value && input.value !== '') {
-                        const value = parseFloat(input.value);
-                        total += value;
-                        filledCount++;
-                    }
-                });
-            });
-
-            const totalItems = vehicles.length * quarters.length;
-            const avg = filledCount > 0 ? (total / filledCount) : 0;
-
-            document.getElementById('totalGap').textContent = `¥${formatCurrency(total)}`;
-            document.getElementById('filledCount').textContent = `${filledCount} / ${totalItems}`;
-            document.getElementById('avgGap').textContent = `¥${formatCurrency(avg)}`;
+        // 加载返利数据
+        function loadRebateData() {
+            const saved = localStorage.getItem('rebateData');
+            if (saved) {
+                rebateData = JSON.parse(saved);
+                rebateIdCounter = Math.max(...rebateData.map(r => r.id), 0) + 1;
+            }
+            renderRebateTable();
         }
 
-        // 清除所有数据
-        function clearAllData() {
-            if (confirm('确定要清除所有数据吗？此操作不可恢复！')) {
-                vehicles.forEach(vehicle => {
-                    quarters.forEach(quarter => {
-                        const key = `vehicle_gap_${vehicle.code}_${quarter}`;
-                        localStorage.removeItem(key);
-                        const input = document.querySelector(`[data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                        if (input) {
-                            input.value = '';
-                        }
-                    });
-                    updateVehicleTotal(vehicle.code);
-                });
+        // 保存返利数据
+        function saveRebateData() {
+            localStorage.setItem('rebateData', JSON.stringify(rebateData));
+        }
+
+        // 添加返利记录
+        function addRebateRow() {
+            rebateData.push({
+                id: rebateIdCounter++,
+                date: '',
+                manager: '',
+                type: '',
+                amount: '',
+                supplier: '',
+                vehicles: '',
+                period: '',
+                signDate: '',
+                note: ''
+            });
+            renderRebateTable();
+            saveRebateData();
+        }
+
+        // 删除返利记录
+        function deleteRebateRow(id) {
+            if (confirm('确定删除这条返利记录吗？')) {
+                rebateData = rebateData.filter(r => r.id !== id);
+                renderRebateTable();
+                saveRebateData();
                 updateSummary();
-                alert('所有数据已清除！');
             }
         }
 
-        // 页面加载时初始化
-        window.addEventListener('DOMContentLoaded', function() {
-            generateDataTable();
-            loadData();
-            updateSummary();
-        });
-
-        // 切换批量导入区域显示/隐藏
-        function toggleImport() {
-            const content = document.getElementById('importContent');
-            content.classList.toggle('show');
-        }
-
-        // 批量导入数据
-        function importData() {
-            const textarea = document.getElementById('importData');
-            const data = textarea.value.trim();
-
-            if (!data) {
-                alert('请先粘贴数据！');
+        // 渲染返利表格
+        function renderRebateTable() {
+            const tbody = document.getElementById('rebateTableBody');
+            if (rebateData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:#ff69b4;">暂无数据，点击上方按钮添加返利记录</td></tr>';
                 return;
             }
 
-            const lines = data.split('\n');
-            let successCount = 0;
-            let errorLines = [];
+            let html = '';
+            rebateData.forEach((item, index) => {
+                html += `<tr>
+                    <td>${index + 1}</td>
+                    <td><input type="date" value="${item.date}" onchange="updateRebateField(${item.id}, 'date', this.value)"></td>
+                    <td><input type="text" value="${item.manager}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名"></td>
+                    <td>
+                        <select onchange="updateRebateField(${item.id}, 'type', this.value)">
+                            <option value="">请选择</option>
+                            ${rebateTypes.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td><input type="number" value="${item.amount}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01"></td>
+                    <td><input type="text" value="${item.supplier}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商"></td>
+                    <td><input type="text" value="${item.vehicles}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02"></td>
+                    <td><input type="text" value="${item.period}" onchange="updateRebateField(${item.id}, 'period', this.value)" placeholder="202601"></td>
+                    <td><input type="date" value="${item.signDate}" onchange="updateRebateField(${item.id}, 'signDate', this.value)"></td>
+                    <td><input type="text" value="${item.note}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
+                    <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
 
-            lines.forEach((line, index) => {
-                line = line.trim();
-                if (!line) return;
-
-                // 支持多种分隔符：制表符、逗号、空格（一个或多个）
-                let parts;
-                if (line.includes('\t')) {
-                    // 优先使用制表符分割（Excel默认格式）
-                    parts = line.split('\t').map(p => p.trim()).filter(p => p);
-                } else if (line.includes(',')) {
-                    // 使用逗号分割
-                    parts = line.split(',').map(p => p.trim()).filter(p => p);
-                } else {
-                    // 使用空格分割（支持一个或多个空格）
-                    parts = line.split(/\s+/).map(p => p.trim()).filter(p => p);
+        // 更新返利字段
+        function updateRebateField(id, field, value) {
+            const item = rebateData.find(r => r.id === id);
+            if (item) {
+                item[field] = value;
+                saveRebateData();
+                if (field === 'amount') {
+                    updateSummary();
                 }
+            }
+        }
 
-                // 跳过表头行（如果包含"车型"、"Q1"等关键字）
-                const firstCol = parts[0].toUpperCase();
-                if (firstCol.includes('车型') || firstCol === 'Q1' || firstCol.includes('VEHICLE')) {
-                    return;
-                }
-
-                if (parts.length < 5) {
-                    errorLines.push(`第${index + 1}行：数据不完整（需要5列：车型名+4个季度数据）\n  原始数据: ${line}\n  解析结果: ${parts.join(' | ')}`);
-                    return;
-                }
-
-                const vehicleCode = parts[0].toUpperCase();
-                const q1 = parts[1];
-                const q2 = parts[2];
-                const q3 = parts[3];
-                const q4 = parts[4];
-
-                // 检查车型是否存在
-                const vehicleExists = vehicles.some(v => v.code === vehicleCode);
-                if (!vehicleExists) {
-                    errorLines.push(`第${index + 1}行：车型 "${vehicleCode}" 不存在（支持的车型：X01、X02、X03、X04、W01、W02、W04）`);
-                    return;
-                }
-
-                // 填充数据
-                const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
-                const values = [q1, q2, q3, q4];
-
-                quarters.forEach((quarter, i) => {
-                    const input = document.querySelector(`[data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
-                    if (input) {
-                        // 移除数字中的逗号（千位分隔符）
-                        const cleanValue = values[i].replace(/,/g, '');
-                        const value = parseFloat(cleanValue);
-                        if (!isNaN(value)) {
-                            input.value = value.toFixed(2);
-                            saveData(vehicleCode, quarter, input.value);
-                        }
+        // ===== 统计汇总 =====
+        function updateSummary() {
+            // 计算总指标缺口
+            let totalGap = 0;
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input && input.value) {
+                        totalGap += parseFloat(input.value);
                     }
                 });
-
-                updateVehicleTotal(vehicleCode);
-                successCount++;
             });
 
+            // 计算总返利金额
+            let totalRebate = 0;
+            rebateData.forEach(item => {
+                if (item.amount) {
+                    totalRebate += parseFloat(item.amount);
+                }
+            });
+
+            // 计算剩余缺口
+            const remaining = totalGap - totalRebate;
+
+            // 计算填充率
+            const fillRate = totalGap > 0 ? ((totalRebate / totalGap) * 100).toFixed(1) : 0;
+
+            document.getElementById('totalGap').textContent = `¥${formatCurrency(totalGap)}`;
+            document.getElementById('totalRebate').textContent = `¥${formatCurrency(totalRebate)}`;
+            document.getElementById('remainingGap').textContent = `¥${formatCurrency(remaining)}`;
+            document.getElementById('fillRate').textContent = `${fillRate}%`;
+        }
+
+        // 页面初始化
+        window.addEventListener('DOMContentLoaded', function() {
+            generateGapTable();
+            loadGapData();
+            loadRebateData();
             updateSummary();
-
-            // 显示结果
-            let message = `✅ 成功导入 ${successCount} 条数据`;
-            if (errorLines.length > 0) {
-                message += `\n\n⚠️ 以下数据导入失败：\n${errorLines.join('\n')}`;
-            }
-            alert(message);
-
-            // 清空输入框
-            if (successCount > 0) {
-                textarea.value = '';
-            }
-        }
-
-        // 清空导入区域
-        function clearImportArea() {
-            document.getElementById('importData').value = '';
-        }
-
-        // 导出当前数据
-        function exportData() {
-            let exportText = '车型\tQ1\tQ2\tQ3\tQ4\n';
-
-            vehicles.forEach(vehicle => {
-                const values = [];
-                quarters.forEach(quarter => {
-                    const input = document.querySelector(`[data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    const value = input && input.value ? parseFloat(input.value).toFixed(2) : '0.00';
-                    values.push(value);
-                });
-                exportText += `${vehicle.code}\t${values.join('\t')}\n`;
-            });
-
-            // 复制到剪贴板
-            const textarea = document.getElementById('importData');
-            textarea.value = exportText;
-            textarea.select();
-
-            try {
-                document.execCommand('copy');
-                alert('✅ 数据已导出到文本框并复制到剪贴板！\n你可以直接粘贴到Excel中。');
-            } catch (err) {
-                alert('✅ 数据已导出到文本框！\n请手动复制粘贴到Excel中。');
-            }
-        }
+        });
     </script>
 </body>
 </html>
