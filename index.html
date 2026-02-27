@@ -489,6 +489,23 @@
             link.click();
         }
 
+        // 自动检测CSV分隔符
+        function detectDelimiter(line) {
+            const delimiters = [',', '\t', ';', '|'];
+            let bestDelimiter = ',';
+            let maxCount = 0;
+
+            for (const delimiter of delimiters) {
+                const count = (line.match(new RegExp('\\' + delimiter, 'g')) || []).length;
+                if (count > maxCount) {
+                    maxCount = count;
+                    bestDelimiter = delimiter;
+                }
+            }
+
+            return bestDelimiter;
+        }
+
         // 导入指标缺口数据
         function importGapData(event) {
             const file = event.target.files[0];
@@ -515,6 +532,11 @@
                         console.log('检测到表头:', lines[0]); // 调试信息
                     }
 
+                    // 自动检测分隔符
+                    const sampleLine = lines[startIndex] || lines[0];
+                    const delimiter = detectDelimiter(sampleLine);
+                    console.log('检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
+
                     let importCount = 0;
                     let errorLines = [];
 
@@ -522,8 +544,8 @@
                         const line = lines[i].trim();
                         if (!line) continue;
 
-                        // 解析CSV行（不过滤空值和0，允许列数不足）
-                        const parts = line.split(',').map(p => p.trim());
+                        // 使用检测到的分隔符解析CSV行
+                        const parts = line.split(delimiter).map(p => p.trim());
                         console.log(`第${i+1}行数据:`, parts); // 调试信息
 
                         if (parts.length < 1) {
