@@ -1069,8 +1069,8 @@
                     <td><input type="text" value="${item.partsSOR || ''}" onchange="updateRebateField(${item.id}, 'partsSOR', this.value)" placeholder="零件/SOR包"></td>
                     <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商名称" required></td>
                     <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02" required></td>
-                    <td><input type="date" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)"></td>
-                    <td><input type="date" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)"></td>
+                    <td><input type="text" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)" placeholder="202601"></td>
+                    <td><input type="text" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)" placeholder="202603"></td>
                     <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1" required></td>
                     <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2" required></td>
                     <td><input type="text" value="${item.attachment || ''}" onchange="updateRebateField(${item.id}, 'attachment', this.value)" placeholder="附件链接"></td>
@@ -1134,8 +1134,8 @@
             // 添加示例数据行
             const data = [
                 headers,
-                ['2026-01-15', '张三', '一般一次性返利', 1000, 'X01', '', '供应商A', 'X01,X02', '2026-01-01', '2026-03-31', '2026.Q1', '2026.Q2', '', '示例备注1', '', 100000, 'SUP001', '采购部', '采购一科'],
-                ['2026-02-20', '李四', '阶梯返利', 2000, 'X01,X02', '零件包A', '供应商B', 'X01,X02,X03', '2026-02-01', '2026-06-30', '2026.Q2', '2026.Q3', 'http://example.com/file.pdf', '示例备注2', '台', 200000, 'SUP002', '采购部', '采购二科'],
+                ['2026-01-15', '张三', '一般一次性返利', 1000, 'X01', '', '供应商A', 'X01,X02', '202601', '202603', '2026.Q1', '2026.Q2', '', '示例备注1', '', 100000, 'SUP001', '采购部', '采购一科'],
+                ['2026-02-20', '李四', '阶梯返利', 2000, 'X01,X02', '零件包A', '供应商B', 'X01,X02,X03', '202602', '202606', '2026.Q2', '2026.Q3', 'http://example.com/file.pdf', '示例备注2', '台', 200000, 'SUP002', '采购部', '采购二科'],
                 ['', '王五', '年度返利', '', '', 'SOR包B', '供应商C', 'X01,X02,X03,X04', '', '', '2026.Q1', '2026.Q4', '', '多车型示例', '件', 150000, 'SUP003', '采购部', '采购三科']
             ];
 
@@ -1282,8 +1282,9 @@
 
                 // 处理日期字段（Excel可能返回序列号）
                 const submitDate = row[0] ? (typeof row[0] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[0]) : String(row[0])) : '';
-                const businessStartTime = row[8] ? (typeof row[8] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[8]) : String(row[8])) : '';
-                const businessEndTime = row[9] ? (typeof row[9] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[9]) : String(row[9])) : '';
+                // 业务发生时间已改为202601格式，直接转字符串
+                const businessStartTime = row[8] ? String(row[8]) : '';
+                const businessEndTime = row[9] ? String(row[9]) : '';
 
                 // 创建新的返利记录
                 rebateData.push({
