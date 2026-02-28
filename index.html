@@ -60,6 +60,7 @@
 
         .data-table {
             width: 100%;
+            min-width: 3500px;
             border-collapse: separate;
             border-spacing: 0;
             margin-top: 10px;
@@ -74,6 +75,7 @@
             text-align: center;
             border: 2px solid #ff1493;
             font-size: 0.95em;
+            white-space: nowrap;
         }
 
         .data-table th:first-child {
@@ -89,6 +91,7 @@
             border: 2px solid #ffc0cb;
             background: #fff5f8;
             text-align: center;
+            white-space: nowrap;
         }
 
         .data-table td.vehicle-label {
@@ -100,12 +103,14 @@
 
         .data-table input, .data-table select {
             width: 100%;
+            min-width: 80px;
             padding: 8px;
             border: 2px solid #ffc0cb;
             border-radius: 8px;
             font-size: 0.95em;
             transition: all 0.3s ease;
             background: white;
+            white-space: nowrap;
         }
 
         .data-table input:focus, .data-table select:focus {
@@ -247,6 +252,27 @@
 
         .table-wrapper {
             overflow-x: auto;
+            max-width: 100%;
+            border: 2px solid #ffc0cb;
+            border-radius: 12px;
+        }
+
+        .table-wrapper::-webkit-scrollbar {
+            height: 12px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #fff5f8;
+            border-radius: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #ff69b4;
+            border-radius: 6px;
+        }
+
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #ff1493;
         }
     </style>
 </head>
@@ -286,14 +312,25 @@
                     <thead>
                         <tr>
                             <th style="width: 60px;">序号</th>
-                            <th style="width: 100px;">采购经理</th>
-                            <th style="width: 120px;">返利类型</th>
-                            <th style="width: 120px;">返利金额（元）</th>
-                            <th style="width: 160px;">供应商名称</th>
-                            <th style="width: 130px;">供货车型</th>
-                            <th style="width: 120px;">最早签署时间</th>
-                            <th style="width: 120px;">最迟签署时间</th>
-                            <th style="width: 180px;">备注</th>
+                            <th style="width: 100px;">提报日期</th>
+                            <th style="width: 100px;">采购经理*</th>
+                            <th style="width: 120px;">返利类型*</th>
+                            <th style="width: 100px;">返利单价</th>
+                            <th style="width: 120px;">单价返利车型</th>
+                            <th style="width: 120px;">零件/SOR包</th>
+                            <th style="width: 160px;">供应商名称*</th>
+                            <th style="width: 130px;">供应商供货车型*</th>
+                            <th style="width: 120px;">业务发生时间起点</th>
+                            <th style="width: 120px;">业务发生时间终点</th>
+                            <th style="width: 130px;">公函/协议最早签署时间*</th>
+                            <th style="width: 130px;">公函/协议最迟签署时间*</th>
+                            <th style="width: 100px;">附件</th>
+                            <th style="width: 150px;">备注</th>
+                            <th style="width: 120px;">返利计算量纲</th>
+                            <th style="width: 120px;">返利金额*</th>
+                            <th style="width: 120px;">供应商编码*</th>
+                            <th style="width: 120px;">采购-一级部门*</th>
+                            <th style="width: 120px;">采购-二级部门*</th>
                             <th style="width: 130px;">推荐落地车型</th>
                             <th style="width: 130px;">推荐落地时间</th>
                             <th style="width: 70px;">操作</th>
@@ -654,16 +691,27 @@
         function addRebateRow() {
             rebateData.push({
                 id: rebateIdCounter++,
+                submitDate: '',
                 manager: '',
                 type: '',
-                amount: '',
+                unitPrice: '',
+                unitPriceVehicles: '',
+                partsSOR: '',
                 supplier: '',
                 vehicles: '',
-                recommendedVehicles: '',
-                recommendedTime: '',
+                businessStartTime: '',
+                businessEndTime: '',
                 earliestSignQuarter: '',
                 latestSignQuarter: '',
-                note: ''
+                attachment: '',
+                note: '',
+                calculationUnit: '',
+                amount: '',
+                supplierCode: '',
+                department1: '',
+                department2: '',
+                recommendedVehicles: '',
+                recommendedTime: ''
             });
             renderRebateTable();
             saveRebateData();
@@ -683,7 +731,7 @@
         function renderRebateTable() {
             const tbody = document.getElementById('rebateTableBody');
             if (rebateData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:#ff69b4;">暂无数据,点击上方按钮添加返利记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="23" style="text-align:center;color:#ff69b4;">暂无数据,点击上方按钮添加返利记录</td></tr>';
                 return;
             }
 
@@ -691,19 +739,30 @@
             rebateData.forEach((item, index) => {
                 html += `<tr>
                     <td>${index + 1}</td>
-                    <td><input type="text" value="${item.manager || ''}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名"></td>
+                    <td><input type="date" value="${item.submitDate || ''}" onchange="updateRebateField(${item.id}, 'submitDate', this.value)"></td>
+                    <td><input type="text" value="${item.manager || ''}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名" required></td>
                     <td>
-                        <select onchange="updateRebateField(${item.id}, 'type', this.value)">
+                        <select onchange="updateRebateField(${item.id}, 'type', this.value)" required>
                             <option value="">请选择</option>
                             ${rebateTypes.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
                         </select>
                     </td>
-                    <td><input type="number" value="${item.amount || ''}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01"></td>
-                    <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商"></td>
-                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02"></td>
-                    <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1"></td>
-                    <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2"></td>
+                    <td><input type="number" value="${item.unitPrice || ''}" onchange="updateRebateField(${item.id}, 'unitPrice', this.value)" placeholder="0.00" step="0.01"></td>
+                    <td><input type="text" value="${item.unitPriceVehicles || ''}" onchange="updateRebateField(${item.id}, 'unitPriceVehicles', this.value)" placeholder="X01,X02"></td>
+                    <td><input type="text" value="${item.partsSOR || ''}" onchange="updateRebateField(${item.id}, 'partsSOR', this.value)" placeholder="零件/SOR包"></td>
+                    <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商名称" required></td>
+                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01 X02" required></td>
+                    <td><input type="date" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)"></td>
+                    <td><input type="date" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)"></td>
+                    <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1" required></td>
+                    <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2" required></td>
+                    <td><input type="text" value="${item.attachment || ''}" onchange="updateRebateField(${item.id}, 'attachment', this.value)" placeholder="附件链接"></td>
                     <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
+                    <td><input type="text" value="${item.calculationUnit || ''}" onchange="updateRebateField(${item.id}, 'calculationUnit', this.value)" placeholder="量纲"></td>
+                    <td><input type="number" value="${item.amount || ''}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01" required></td>
+                    <td><input type="text" value="${item.supplierCode || ''}" onchange="updateRebateField(${item.id}, 'supplierCode', this.value)" placeholder="编码" required></td>
+                    <td><input type="text" value="${item.department1 || ''}" onchange="updateRebateField(${item.id}, 'department1', this.value)" placeholder="一级部门" required></td>
+                    <td><input type="text" value="${item.department2 || ''}" onchange="updateRebateField(${item.id}, 'department2', this.value)" placeholder="二级部门" required></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedVehicles || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedTime || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
@@ -727,11 +786,13 @@
         // 下载返利记录模板
         function downloadRebateTemplate() {
             // 创建CSV内容（不包含系统生成的字段）
-            let csv = '\uFEFF采购经理,返利类型,返利金额(元),供应商名称,供货车型,最早签署时间,最迟签署时间,备注\n';
-            // 添加示例行（车型用空格分隔更兼容）
-            csv += '张三,一般一次性返利,100000,供应商A,X01,2026.Q1,2026.Q2,示例备注\n';
-            csv += '李四,阶梯返利,200000,供应商B,X01 X02,2026.Q2,2026.Q3,多车型示例\n';
-            csv += '王五,年度返利,150000,供应商C,X01 X02 X03,2026.Q1,2026.Q4,多车型用空格分隔\n';
+            // 字段顺序按照Feishu文档：提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*
+            let csv = '\uFEFF提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*\n';
+
+            // 添加示例行
+            csv += '2026-01-15,张三,一般一次性返利,1000,X01,,供应商A,X01 X02,2026-01-01,2026-03-31,2026.Q1,2026.Q2,,示例备注1,,100000,SUP001,采购部,采购一科\n';
+            csv += '2026-02-20,李四,阶梯返利,2000,X01 X02,零件包A,供应商B,X01 X02 X03,2026-02-01,2026-06-30,2026.Q2,2026.Q3,http://example.com/file.pdf,示例备注2,台,200000,SUP002,采购部,采购二科\n';
+            csv += ',王五,年度返利,,,SOR包B,供应商C,X01 X02 X03 X04,,,2026.Q1,2026.Q4,,多车型示例,件,150000,SUP003,采购部,采购三科\n';
 
             // 创建下载
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -799,7 +860,7 @@
 
             // 跳过表头
             let startIndex = 0;
-            if (lines[0].includes('采购经理') || lines[0].includes('返利类型')) {
+            if (lines[0].includes('采购经理') || lines[0].includes('返利类型') || lines[0].includes('提报日期')) {
                 startIndex = 1;
                 console.log('检测到返利表头:', lines[0]); // 调试信息
             }
@@ -828,24 +889,35 @@
 
                 console.log(`返利第${i+1}行数据:`, parts); // 调试信息
 
-                // 至少需要前4个必填字段：采购经理、返利类型、返利金额、供应商
-                if (parts.length < 4) {
-                    errorLines.push(`第${i+1}行：字段数不足（至少需要4个字段，实际${parts.length}个）`);
+                // 字段顺序：提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*
+                // 至少需要必填字段：采购经理(1)、返利类型(2)、供应商名称(6)、供应商供货车型(7)、最早签署时间(10)、最迟签署时间(11)、返利金额(15)、供应商编码(16)、一级部门(17)、二级部门(18)
+                if (parts.length < 2) {
+                    errorLines.push(`第${i+1}行：字段数不足`);
                     continue;
                 }
 
                 // 创建新的返利记录，缺失字段自动填空
-                // 新模板字段顺序：采购经理,返利类型,返利金额,供应商,供货车型,最早签署时间,最迟签署时间,备注
                 rebateData.push({
                     id: rebateIdCounter++,
-                    manager: parts[0] || '',
-                    type: parts[1] || '',
-                    amount: parts[2] || '',
-                    supplier: parts[3] || '',
-                    vehicles: parts[4] || '',
-                    earliestSignQuarter: parts[5] || '',
-                    latestSignQuarter: parts[6] || '',
-                    note: parts[7] || '',
+                    submitDate: parts[0] || '',
+                    manager: parts[1] || '',
+                    type: parts[2] || '',
+                    unitPrice: parts[3] || '',
+                    unitPriceVehicles: parts[4] || '',
+                    partsSOR: parts[5] || '',
+                    supplier: parts[6] || '',
+                    vehicles: parts[7] || '',
+                    businessStartTime: parts[8] || '',
+                    businessEndTime: parts[9] || '',
+                    earliestSignQuarter: parts[10] || '',
+                    latestSignQuarter: parts[11] || '',
+                    attachment: parts[12] || '',
+                    note: parts[13] || '',
+                    calculationUnit: parts[14] || '',
+                    amount: parts[15] || '',
+                    supplierCode: parts[16] || '',
+                    department1: parts[17] || '',
+                    department2: parts[18] || '',
                     recommendedVehicles: '', // 系统生成，导入时留空
                     recommendedTime: '' // 系统生成，导入时留空
                 });
