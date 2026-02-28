@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>返利排期管理系统</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
+    <!-- SheetJS库用于Excel文件处理 -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -484,7 +486,7 @@
             <div style="margin-bottom: 15px;">
                 <button class="add-button" onclick="downloadGapTemplate()">📥 下载缺口模板</button>
                 <button class="add-button" onclick="document.getElementById('gapFileInput').click()">📤 导入缺口数据</button>
-                <input type="file" id="gapFileInput" accept=".csv,.txt" style="display:none;" onchange="importGapData(event)">
+                <input type="file" id="gapFileInput" accept=".xlsx,.xls" style="display:none;" onchange="importGapData(event)">
             </div>
             <div class="table-wrapper">
                 <table class="data-table" id="gapTable">
@@ -502,7 +504,7 @@
                 <button class="add-button" onclick="document.getElementById('rebateFileInput').click()">📤 导入返利数据</button>
                 <button class="add-button" onclick="exportRebateData()" style="background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);">💾 导出返利数据</button>
                 <button class="add-button" onclick="clearAllRebateData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有返利数据</button>
-                <input type="file" id="rebateFileInput" accept=".csv,.txt" style="display:none;" onchange="importRebateData(event)">
+                <input type="file" id="rebateFileInput" accept=".xlsx,.xls" style="display:none;" onchange="importRebateData(event)">
             </div>
             <div class="table-wrapper" id="rebateTableWrapper">
                 <table class="data-table" id="rebateTable">
@@ -765,18 +767,21 @@
 
         // 下载指标缺口模板
         function downloadGapTemplate() {
-            // 创建CSV内容
-            let csv = '\uFEFF车型,2026 Q1,2026 Q2,2026 Q3,2026 Q4\n'; // \uFEFF是BOM，让Excel正确识别UTF-8
+            // 创建工作簿数据
+            const data = [['车型', '2026 Q1', '2026 Q2', '2026 Q3', '2026 Q4']];
             vehicles.forEach(vehicle => {
-                csv += `${vehicle.name},0,0,0,0\n`;
+                data.push([vehicle.name, 0, 0, 0, 0]);
             });
 
-            // 创建下载
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = '指标缺口模板.csv';
-            link.click();
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '指标缺口');
+
+            // 下载Excel文件
+            XLSX.writeFile(wb, '指标缺口模板.xlsx');
         }
 
         // 自动检测CSV分隔符
@@ -804,75 +809,57 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    let content = e.target.result;
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
 
-                    // 检查是否有乱码，尝试不同编码
-                    if (content.includes('�') || content.includes('ï¿½')) {
-                        console.log('检测到可能的编码问题，尝试GBK解码...');
-                        // 重新读取为GBK
-                        const readerGBK = new FileReader();
-                        readerGBK.onload = function(e2) {
-                            processGapData(e2.target.result);
-                        };
-                        readerGBK.readAsText(file, 'GBK');
-                        return;
-                    }
+                    // 读取第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
 
-                    processGapData(content);
+                    // 将工作表转换为JSON格式
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    processGapData(jsonData);
                 } catch (error) {
                     alert('导入失败：' + error.message);
                     console.error('导入错误:', error);
                 }
             };
 
-            // 首先尝试UTF-8
-            reader.readAsText(file, 'UTF-8');
+            // 读取为ArrayBuffer
+            reader.readAsArrayBuffer(file);
 
             // 清空input，允许重复导入同一文件
             event.target.value = '';
         }
 
         // 处理指标缺口数据
-        function processGapData(content) {
-            console.log('文件内容:', content.substring(0, 200)); // 调试信息
+        function processGapData(jsonData) {
+            console.log('Excel数据:', jsonData); // 调试信息
 
-            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-            console.log('总行数:', lines.length); // 调试信息
-
-            if (lines.length === 0) {
+            if (!jsonData || jsonData.length === 0) {
                 alert('文件为空，请检查文件内容！');
                 return;
             }
 
-            // 跳过表头
+            // 跳过表头（第一行）
             let startIndex = 0;
-            if (lines[0].includes('车型') || lines[0].includes('Q1')) {
+            const firstRow = jsonData[0];
+            if (firstRow && (firstRow[0] === '车型' || String(firstRow[1]).includes('Q1'))) {
                 startIndex = 1;
-                console.log('检测到表头:', lines[0]); // 调试信息
+                console.log('检测到表头:', firstRow);
             }
-
-            // 自动检测分隔符
-            const sampleLine = lines[startIndex] || lines[0];
-            const delimiter = detectDelimiter(sampleLine);
-            console.log('检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
 
             let importCount = 0;
             let errorLines = [];
 
-            for (let i = startIndex; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
+            for (let i = startIndex; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
 
-                // 使用检测到的分隔符解析CSV行
-                const parts = line.split(delimiter).map(p => p.trim());
-                console.log(`第${i+1}行数据:`, parts); // 调试信息
+                const vehicleCode = String(row[0] || '').trim();
+                if (!vehicleCode) continue;
 
-                if (parts.length < 1) {
-                    errorLines.push(`第${i+1}行：没有车型信息`);
-                    continue;
-                }
-
-                const vehicleCode = parts[0];
                 const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
 
                 if (!vehicle) {
@@ -880,14 +867,13 @@
                     continue;
                 }
 
-                // 导入4个季度的数据，缺失的列默认为0
+                // 导入4个季度的数据
                 quarters.forEach((quarter, idx) => {
-                    const value = parts[idx + 1]; // 可能为undefined
+                    const value = row[idx + 1];
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
 
                     if (input) {
-                        if (value === undefined || value === '') {
-                            // 缺失的列设为0
+                        if (value === undefined || value === '' || value === null) {
                             input.value = '0.00';
                             saveGapData(vehicle.code, quarter, '0.00');
                         } else {
@@ -896,7 +882,6 @@
                                 input.value = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
                                 saveGapData(vehicle.code, quarter, numValue);
                             } else {
-                                // 无效数值也设为0
                                 input.value = '0.00';
                                 saveGapData(vehicle.code, quarter, '0.00');
                             }
@@ -1086,21 +1071,26 @@
 
         // 下载返利记录模板
         function downloadRebateTemplate() {
-            // 创建CSV内容（不包含系统生成的字段）
-            // 字段顺序按照Feishu文档：提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*
-            let csv = '\uFEFF提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*\n';
+            // 创建表头（不包含系统生成的字段）
+            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*'];
 
-            // 添加示例行
-            csv += '2026-01-15,张三,一般一次性返利,1000,X01,,供应商A,X01,X02,2026-01-01,2026-03-31,2026.Q1,2026.Q2,,示例备注1,,100000,SUP001,采购部,采购一科\n';
-            csv += '2026-02-20,李四,阶梯返利,2000,X01,X02,零件包A,供应商B,X01,X02,X03,2026-02-01,2026-06-30,2026.Q2,2026.Q3,http://example.com/file.pdf,示例备注2,台,200000,SUP002,采购部,采购二科\n';
-            csv += ',王五,年度返利,,,SOR包B,供应商C,X01,X02,X03,X04,,,2026.Q1,2026.Q4,,多车型示例,件,150000,SUP003,采购部,采购三科\n';
+            // 添加示例数据行
+            const data = [
+                headers,
+                ['2026-01-15', '张三', '一般一次性返利', 1000, 'X01', '', '供应商A', 'X01,X02', '2026-01-01', '2026-03-31', '2026.Q1', '2026.Q2', '', '示例备注1', '', 100000, 'SUP001', '采购部', '采购一科'],
+                ['2026-02-20', '李四', '阶梯返利', 2000, 'X01,X02', '零件包A', '供应商B', 'X01,X02,X03', '2026-02-01', '2026-06-30', '2026.Q2', '2026.Q3', 'http://example.com/file.pdf', '示例备注2', '台', 200000, 'SUP002', '采购部', '采购二科'],
+                ['', '王五', '年度返利', '', '', 'SOR包B', '供应商C', 'X01,X02,X03,X04', '', '', '2026.Q1', '2026.Q4', '', '多车型示例', '件', 150000, 'SUP003', '采购部', '采购三科']
+            ];
 
-            // 创建下载
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = '返利记录模板.csv';
-            link.click();
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '返利记录');
+
+            // 下载Excel文件
+            XLSX.writeFile(wb, '返利记录模板.xlsx');
         }
 
         // 导出返利数据
@@ -1110,54 +1100,44 @@
                 return;
             }
 
-            // CSV表头（包含所有21个字段+2个系统生成字段）
-            let csv = '\uFEFF提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*,推荐落地车型,推荐落地时间\n';
+            // 表头（包含所有21个字段+2个系统生成字段）
+            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*', '推荐落地车型', '推荐落地时间'];
 
-            // 处理CSV特殊字符的函数
-            function escapeCsvField(field) {
-                if (field === null || field === undefined) {
-                    return '';
-                }
-                const str = String(field);
-                // 如果包含逗号、引号或换行符，需要用引号包裹，并将引号转义为两个引号
-                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                    return '"' + str.replace(/"/g, '""') + '"';
-                }
-                return str;
-            }
+            // 准备数据
+            const data = [headers];
 
-            // 遍历每条返利记录
             rebateData.forEach(item => {
-                const row = [
-                    escapeCsvField(item.submitDate || ''),
-                    escapeCsvField(item.manager || ''),
-                    escapeCsvField(item.type || ''),
-                    escapeCsvField(item.unitPrice || ''),
-                    escapeCsvField(item.unitPriceVehicles || ''),
-                    escapeCsvField(item.partsSOR || ''),
-                    escapeCsvField(item.supplier || ''),
-                    escapeCsvField(item.vehicles || ''),
-                    escapeCsvField(item.businessStartTime || ''),
-                    escapeCsvField(item.businessEndTime || ''),
-                    escapeCsvField(item.earliestSignQuarter || ''),
-                    escapeCsvField(item.latestSignQuarter || ''),
-                    escapeCsvField(item.attachment || ''),
-                    escapeCsvField(item.note || ''),
-                    escapeCsvField(item.calculationUnit || ''),
-                    escapeCsvField(item.amount || ''),
-                    escapeCsvField(item.supplierCode || ''),
-                    escapeCsvField(item.department1 || ''),
-                    escapeCsvField(item.department2 || ''),
-                    escapeCsvField(item.recommendedVehicles || ''),
-                    escapeCsvField(item.recommendedTime || '')
-                ];
-                csv += row.join(',') + '\n';
+                data.push([
+                    item.submitDate || '',
+                    item.manager || '',
+                    item.type || '',
+                    item.unitPrice || '',
+                    item.unitPriceVehicles || '',
+                    item.partsSOR || '',
+                    item.supplier || '',
+                    item.vehicles || '',
+                    item.businessStartTime || '',
+                    item.businessEndTime || '',
+                    item.earliestSignQuarter || '',
+                    item.latestSignQuarter || '',
+                    item.attachment || '',
+                    item.note || '',
+                    item.calculationUnit || '',
+                    item.amount || '',
+                    item.supplierCode || '',
+                    item.department1 || '',
+                    item.department2 || '',
+                    item.recommendedVehicles || '',
+                    item.recommendedTime || ''
+                ]);
             });
 
-            // 创建下载
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
+            // 创建工作表
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '返利数据');
 
             // 生成带时间戳的文件名
             const now = new Date();
@@ -1166,16 +1146,17 @@
                               String(now.getDate()).padStart(2, '0') + '_' +
                               String(now.getHours()).padStart(2, '0') +
                               String(now.getMinutes()).padStart(2, '0');
-            link.download = `返利数据_${timestamp}.csv`;
-            link.click();
+
+            // 下载Excel文件
+            XLSX.writeFile(wb, `返利数据_${timestamp}.xlsx`);
         }
 
         // 导入返利记录数据
         function importRebateData(event) {
-            console.log('=== 返利导入函数被调用 ==='); // 最早的调试点
+            console.log('=== 返利导入函数被调用 ===');
 
             const file = event.target.files[0];
-            console.log('选择的文件:', file); // 检查文件是否被选中
+            console.log('选择的文件:', file);
 
             if (!file) {
                 console.log('没有选择文件');
@@ -1188,104 +1169,87 @@
             reader.onload = function(e) {
                 console.log('=== 文件读取完成 ===');
                 try {
-                    let content = e.target.result;
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
 
-                    // 检查是否有乱码，尝试不同编码
-                    if (content.includes('�') || content.includes('ï¿½')) {
-                        console.log('检测到可能的编码问题，尝试GBK解码...');
-                        // 重新读取为GBK
-                        const readerGBK = new FileReader();
-                        readerGBK.onload = function(e2) {
-                            processRebateData(e2.target.result);
-                        };
-                        readerGBK.readAsText(file, 'GBK');
-                        return;
-                    }
+                    // 读取第一个工作表
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
 
-                    processRebateData(content);
+                    // 将工作表转换为JSON格式
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    processRebateData(jsonData);
                 } catch (error) {
                     alert('导入失败：' + error.message);
                     console.error('导入错误:', error);
                 }
             };
-            reader.readAsText(file, 'UTF-8');
+            reader.readAsArrayBuffer(file);
 
             // 清空input，允许重复导入同一文件
             event.target.value = '';
         }
 
         // 处理返利记录数据
-        function processRebateData(content) {
-            console.log('返利文件内容:', content.substring(0, 300)); // 调试信息
+        function processRebateData(jsonData) {
+            console.log('返利Excel数据:', jsonData);
 
-            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
-            console.log('返利总行数:', lines.length); // 调试信息
-
-            if (lines.length === 0) {
+            if (!jsonData || jsonData.length === 0) {
                 alert('文件为空，请检查文件内容！');
                 return;
             }
 
-            // 跳过表头
+            // 跳过表头（第一行）
             let startIndex = 0;
-            if (lines[0].includes('采购经理') || lines[0].includes('返利类型') || lines[0].includes('提报日期')) {
+            const firstRow = jsonData[0];
+            if (firstRow && (firstRow[0] === '提报日期' || String(firstRow[1]).includes('采购经理') || String(firstRow[2]).includes('返利类型'))) {
                 startIndex = 1;
-                console.log('检测到返利表头:', lines[0]); // 调试信息
+                console.log('检测到返利表头:', firstRow);
             }
-
-            // 自动检测分隔符
-            const sampleLine = lines[startIndex] || lines[0];
-            const delimiter = detectDelimiter(sampleLine);
-            console.log('返利数据检测到分隔符:', delimiter === '\t' ? 'Tab' : delimiter); // 调试信息
 
             let importCount = 0;
             let errorLines = [];
 
-            for (let i = startIndex; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue;
+            for (let i = startIndex; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
 
-                // 解析CSV行（支持带引号的字段）
-                let parts;
-                if (delimiter === ',') {
-                    // 逗号分隔符需要特殊处理引号
-                    parts = parseCSVLine(line);
-                } else {
-                    // 其他分隔符直接分割
-                    parts = line.split(delimiter).map(p => p.trim());
-                }
-
-                console.log(`返利第${i+1}行数据:`, parts); // 调试信息
+                console.log(`返利第${i+1}行数据:`, row);
 
                 // 字段顺序：提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*
-                // 至少需要必填字段：采购经理(1)、返利类型(2)、供应商名称(6)、供应商供货车型(7)、最早签署时间(10)、最迟签署时间(11)、返利金额(15)、供应商编码(16)、一级部门(17)、二级部门(18)
-                if (parts.length < 2) {
+                if (row.length < 2) {
                     errorLines.push(`第${i+1}行：字段数不足`);
                     continue;
                 }
 
-                // 创建新的返利记录，缺失字段自动填空
+                // 处理日期字段（Excel可能返回序列号）
+                const submitDate = row[0] ? (typeof row[0] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[0]) : String(row[0])) : '';
+                const businessStartTime = row[8] ? (typeof row[8] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[8]) : String(row[8])) : '';
+                const businessEndTime = row[9] ? (typeof row[9] === 'number' ? XLSX.SSF.format('yyyy-mm-dd', row[9]) : String(row[9])) : '';
+
+                // 创建新的返利记录
                 rebateData.push({
                     id: rebateIdCounter++,
-                    submitDate: parts[0] || '',
-                    manager: parts[1] || '',
-                    type: parts[2] || '',
-                    unitPrice: parts[3] || '',
-                    unitPriceVehicles: parts[4] || '',
-                    partsSOR: parts[5] || '',
-                    supplier: parts[6] || '',
-                    vehicles: parts[7] || '',
-                    businessStartTime: parts[8] || '',
-                    businessEndTime: parts[9] || '',
-                    earliestSignQuarter: parts[10] || '',
-                    latestSignQuarter: parts[11] || '',
-                    attachment: parts[12] || '',
-                    note: parts[13] || '',
-                    calculationUnit: parts[14] || '',
-                    amount: parts[15] || '',
-                    supplierCode: parts[16] || '',
-                    department1: parts[17] || '',
-                    department2: parts[18] || '',
+                    submitDate: submitDate,
+                    manager: row[1] ? String(row[1]) : '',
+                    type: row[2] ? String(row[2]) : '',
+                    unitPrice: row[3] ? String(row[3]) : '',
+                    unitPriceVehicles: row[4] ? String(row[4]) : '',
+                    partsSOR: row[5] ? String(row[5]) : '',
+                    supplier: row[6] ? String(row[6]) : '',
+                    vehicles: row[7] ? String(row[7]) : '',
+                    businessStartTime: businessStartTime,
+                    businessEndTime: businessEndTime,
+                    earliestSignQuarter: row[10] ? String(row[10]) : '',
+                    latestSignQuarter: row[11] ? String(row[11]) : '',
+                    attachment: row[12] ? String(row[12]) : '',
+                    note: row[13] ? String(row[13]) : '',
+                    calculationUnit: row[14] ? String(row[14]) : '',
+                    amount: row[15] ? String(row[15]) : '',
+                    supplierCode: row[16] ? String(row[16]) : '',
+                    department1: row[17] ? String(row[17]) : '',
+                    department2: row[18] ? String(row[18]) : '',
                     recommendedVehicles: '', // 系统生成，导入时留空
                     recommendedTime: '' // 系统生成，导入时留空
                 });
