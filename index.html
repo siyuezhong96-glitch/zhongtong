@@ -301,6 +301,15 @@
         #rebateTableWrapper::-webkit-scrollbar-thumb:hover {
             background: #ff1493;
         }
+
+        /* 返利表格固定表头 */
+        #rebateTable thead th {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
