@@ -486,6 +486,7 @@
             <div style="margin-bottom: 15px;">
                 <button class="add-button" onclick="downloadGapTemplate()">📥 下载缺口模板</button>
                 <button class="add-button" onclick="document.getElementById('gapFileInput').click()">📤 导入缺口数据</button>
+                <button class="add-button" onclick="clearAllGapData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有缺口数据</button>
                 <input type="file" id="gapFileInput" accept=".xlsx,.xls" style="display:none;" onchange="importGapData(event)">
             </div>
             <div class="table-wrapper">
@@ -718,6 +719,40 @@
                 updateVehicleTotal(vehicle.code);
             });
             updateGapSummaryRow();
+        }
+
+        // 清除所有缺口数据
+        function clearAllGapData() {
+            if (!confirm('确定要清除所有缺口数据吗？此操作不可恢复！')) {
+                return;
+            }
+
+            // 清除localStorage中的缺口数据
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    const key = `gap_${vehicle.code}_${quarter}`;
+                    localStorage.removeItem(key);
+                });
+            });
+
+            // 清空所有输入框
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input) {
+                        input.value = '0.00';
+                    }
+                });
+                updateVehicleTotal(vehicle.code);
+            });
+
+            // 更新汇总行
+            updateGapSummaryRow();
+
+            // 更新统计汇总
+            updateSummary();
+
+            alert('所有缺口数据已清除！');
         }
 
         // 更新单个车型合计
