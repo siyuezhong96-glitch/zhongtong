@@ -1303,10 +1303,10 @@
                         bgColor = '#ffe4e1'; // 浅红 - 填充小于20%
                     }
 
-                    html += `<td style="background: ${bgColor}; padding: 12px 10px; font-size: 0.9em;">
-                        <div style="line-height: 1.8;"><strong>原始:</strong> ¥${formatCurrency(data.original)}</div>
-                        <div style="color: #28a745; line-height: 1.8;"><strong>分配:</strong> ¥${formatCurrency(data.allocated)}</div>
-                        <div style="color: ${remaining > 0 ? '#dc3545' : '#28a745'}; line-height: 1.8;"><strong>剩余:</strong> ¥${formatCurrency(remaining)}</div>
+                    html += `<td style="background: ${bgColor}; padding: 8px 10px; font-size: 0.9em;">
+                        <div style="line-height: 1.6;"><strong>原始:</strong> ¥${formatCurrency(data.original)}</div>
+                        <div style="color: #28a745; line-height: 1.6;"><strong>分配:</strong> ¥${formatCurrency(data.allocated)}</div>
+                        <div style="color: ${remaining > 0 ? '#dc3545' : '#28a745'}; line-height: 1.6;"><strong>剩余:</strong> ¥${formatCurrency(remaining)}</div>
                     </td>`;
                 });
 
@@ -1318,10 +1318,10 @@
                 });
                 const vehicleRemaining = vehicleOriginal - vehicleAllocated;
 
-                html += `<td class="total-cell" style="font-size: 0.9em; padding: 12px 10px;">
-                    <div style="line-height: 1.8;">原始: ¥${formatCurrency(vehicleOriginal)}</div>
-                    <div style="color: #28a745; line-height: 1.8;">分配: ¥${formatCurrency(vehicleAllocated)}</div>
-                    <div style="color: ${vehicleRemaining > 0 ? '#dc3545' : '#28a745'}; line-height: 1.8;">剩余: ¥${formatCurrency(vehicleRemaining)}</div>
+                html += `<td class="total-cell" style="font-size: 0.9em; padding: 8px 10px;">
+                    <div style="line-height: 1.6;">原始: ¥${formatCurrency(vehicleOriginal)}</div>
+                    <div style="color: #28a745; line-height: 1.6;">分配: ¥${formatCurrency(vehicleAllocated)}</div>
+                    <div style="color: ${vehicleRemaining > 0 ? '#dc3545' : '#28a745'}; line-height: 1.6;">剩余: ¥${formatCurrency(vehicleRemaining)}</div>
                 </td></tr>`;
             });
 
