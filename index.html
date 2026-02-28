@@ -728,9 +728,10 @@
         function downloadRebateTemplate() {
             // 创建CSV内容（不包含系统生成的字段）
             let csv = '\uFEFF采购经理,返利类型,返利金额(元),供应商名称,供货车型,最早签署时间,最迟签署时间,备注\n';
-            // 添加示例行
+            // 添加示例行（车型用空格分隔更兼容）
             csv += '张三,一般一次性返利,100000,供应商A,X01,2026.Q1,2026.Q2,示例备注\n';
-            csv += '李四,阶梯返利,200000,供应商B,"X01,X02",2026.Q2,2026.Q3,多车型示例\n';
+            csv += '李四,阶梯返利,200000,供应商B,X01 X02,2026.Q2,2026.Q3,多车型示例\n';
+            csv += '王五,年度返利,150000,供应商C,X01 X02 X03,2026.Q1,2026.Q4,多车型用空格分隔\n';
 
             // 创建下载
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -940,8 +941,11 @@
                 const rebateAmount = parseFloat(rebate.amount);
                 if (rebateAmount <= 0) return;
 
-                // 解析供货车型
-                const rebateVehicles = rebate.vehicles.split(',').map(v => v.trim()).filter(v => v);
+                // 解析供货车型（支持逗号和空格分隔）
+                const rebateVehicles = rebate.vehicles
+                    .split(/[,\s]+/) // 用逗号或空格分隔
+                    .map(v => v.trim())
+                    .filter(v => v);
                 if (rebateVehicles.length === 0) return;
 
                 // 解析签署时间范围
