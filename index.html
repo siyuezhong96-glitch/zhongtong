@@ -325,6 +325,52 @@
             padding: 6px;
         }
 
+        /* 使用说明样式 */
+        .usage-guide {
+            background: linear-gradient(135deg, #fff9f0 0%, #ffe4f0 100%);
+            border-radius: 15px;
+            padding: 25px 30px;
+            margin: 0 auto 30px auto;
+            max-width: 1400px;
+            border-left: 5px solid #ff69b4;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.15);
+        }
+
+        .usage-guide h3 {
+            color: #ff1493;
+            font-size: 1.4em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .guide-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 0;
+        }
+
+        .step {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 3px solid #ff69b4;
+        }
+
+        .step strong {
+            color: #ff1493;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+
+        .step p {
+            color: #555;
+            line-height: 1.6;
+            margin: 0;
+            font-size: 0.95em;
+        }
+
     </style>
 </head>
 <body>
@@ -332,6 +378,29 @@
         <header>
             <h1>💰 返利调配管理系统</h1>
         </header>
+
+        <!-- 使用说明 -->
+        <div class="usage-guide">
+            <h3>📖 使用说明</h3>
+            <div class="guide-content">
+                <div class="step">
+                    <strong>第一步：导入指标缺口</strong>
+                    <p>下载缺口模板 → 填写各车型各季度的指标缺口金额 → 导入缺口数据</p>
+                </div>
+                <div class="step">
+                    <strong>第二步：导入返利记录</strong>
+                    <p>下载返利模板 → 填写返利信息（提报日期、供应商、返利金额等19个字段）→ 导入返利数据</p>
+                </div>
+                <div class="step">
+                    <strong>第三步：智能分配</strong>
+                    <p>点击"智能分配返利"按钮，系统自动按提报日期优先级，将返利分配到最合适的车型和季度</p>
+                </div>
+                <div class="step">
+                    <strong>第四步：查看结果</strong>
+                    <p>在返利表格中查看【推荐落地车型】和【推荐落地时间】，在分配结果表格中查看各车型缺口填补情况</p>
+                </div>
+            </div>
+        </div>
 
         <!-- 模块1: 当前指标缺口 -->
         <div class="section">
