@@ -308,6 +308,7 @@
                 <button class="add-button" onclick="addRebateRow()">➕ 添加返利记录</button>
                 <button class="add-button" onclick="downloadRebateTemplate()">📥 下载返利模板</button>
                 <button class="add-button" onclick="document.getElementById('rebateFileInput').click()">📤 导入返利数据</button>
+                <button class="add-button" onclick="clearAllRebateData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有返利数据</button>
                 <input type="file" id="rebateFileInput" accept=".csv,.txt" style="display:none;" onchange="importRebateData(event)">
             </div>
             <div class="table-wrapper">
@@ -436,11 +437,11 @@
             const table = document.getElementById('gapTable');
             let html = '<thead><tr><th style="width: 120px;">车型</th>';
 
-            // 表头：季度列
+            // 表头：季度列 - 缩小宽度
             quarters.forEach(q => {
-                html += `<th>2026 ${q}</th>`;
+                html += `<th style="width: 150px;">2026 ${q}</th>`;
             });
-            html += '<th>合计</th></tr></thead><tbody>';
+            html += '<th style="width: 180px;">合计</th></tr></thead><tbody>';
 
             // 数据行：每个车型一行
             vehicles.forEach(vehicle => {
@@ -727,6 +728,20 @@
                 renderRebateTable();
                 saveRebateData();
                 updateSummary();
+            }
+        }
+
+        // 清除所有返利数据
+        function clearAllRebateData() {
+            if (confirm('⚠️ 警告：确定要清除所有返利数据吗？此操作不可恢复！')) {
+                if (confirm('再次确认：真的要删除所有 ' + rebateData.length + ' 条返利记录吗？')) {
+                    rebateData = [];
+                    rebateIdCounter = 1;
+                    renderRebateTable();
+                    saveRebateData();
+                    updateSummary();
+                    alert('✅ 所有返利数据已清除！');
+                }
             }
         }
 
