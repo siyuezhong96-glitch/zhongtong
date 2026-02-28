@@ -769,7 +769,7 @@
                     <td><input type="text" value="${item.unitPriceVehicles || ''}" onchange="updateRebateField(${item.id}, 'unitPriceVehicles', this.value)" placeholder="X01,X02"></td>
                     <td><input type="text" value="${item.partsSOR || ''}" onchange="updateRebateField(${item.id}, 'partsSOR', this.value)" placeholder="零件/SOR包"></td>
                     <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商名称" required></td>
-                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01 X02" required></td>
+                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02" required></td>
                     <td><input type="date" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)"></td>
                     <td><input type="date" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)"></td>
                     <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1" required></td>
@@ -808,9 +808,9 @@
             let csv = '\uFEFF提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*\n';
 
             // 添加示例行
-            csv += '2026-01-15,张三,一般一次性返利,1000,X01,,供应商A,X01 X02,2026-01-01,2026-03-31,2026.Q1,2026.Q2,,示例备注1,,100000,SUP001,采购部,采购一科\n';
-            csv += '2026-02-20,李四,阶梯返利,2000,X01 X02,零件包A,供应商B,X01 X02 X03,2026-02-01,2026-06-30,2026.Q2,2026.Q3,http://example.com/file.pdf,示例备注2,台,200000,SUP002,采购部,采购二科\n';
-            csv += ',王五,年度返利,,,SOR包B,供应商C,X01 X02 X03 X04,,,2026.Q1,2026.Q4,,多车型示例,件,150000,SUP003,采购部,采购三科\n';
+            csv += '2026-01-15,张三,一般一次性返利,1000,X01,,供应商A,X01,X02,2026-01-01,2026-03-31,2026.Q1,2026.Q2,,示例备注1,,100000,SUP001,采购部,采购一科\n';
+            csv += '2026-02-20,李四,阶梯返利,2000,X01,X02,零件包A,供应商B,X01,X02,X03,2026-02-01,2026-06-30,2026.Q2,2026.Q3,http://example.com/file.pdf,示例备注2,台,200000,SUP002,采购部,采购二科\n';
+            csv += ',王五,年度返利,,,SOR包B,供应商C,X01,X02,X03,X04,,,2026.Q1,2026.Q4,,多车型示例,件,150000,SUP003,采购部,采购三科\n';
 
             // 创建下载
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1007,16 +1007,27 @@
             return result;
         }
 
-        // 执行智能分配
+        // 执行智能分配（新算法：不拆分返利）
         function performAllocation() {
-            // 1. 收集所有缺口数据
-            const gaps = {};
+            // 1. 收集所有缺口数据，创建剩余缺口副本
+            const remainingGaps = {};
             vehicles.forEach(vehicle => {
-                gaps[vehicle.code] = {};
+                remainingGaps[vehicle.code] = {};
                 quarters.forEach(quarter => {
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
                     const gapAmount = input && input.value ? parseFloat(input.value) : 0;
-                    gaps[vehicle.code][quarter] = {
+                    remainingGaps[vehicle.code][quarter] = gapAmount;
+                });
+            });
+
+            // 2. 用于记录分配结果
+            const allocationResults = {};
+            vehicles.forEach(vehicle => {
+                allocationResults[vehicle.code] = {};
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    const gapAmount = input && input.value ? parseFloat(input.value) : 0;
+                    allocationResults[vehicle.code][quarter] = {
                         original: gapAmount,
                         allocated: 0,
                         sources: []
@@ -1024,19 +1035,33 @@
                 });
             });
 
-            // 2. 遍历返利记录，进行分配
+            // 3. 遍历返利记录，按顺序分配
             rebateData.forEach(rebate => {
-                if (!rebate.amount || !rebate.vehicles) return;
+                if (!rebate.amount || !rebate.vehicles) {
+                    // 如果没有金额或车型，标记为未分配
+                    rebate.recommendedVehicles = '';
+                    rebate.recommendedTime = '';
+                    return;
+                }
 
                 const rebateAmount = parseFloat(rebate.amount);
-                if (rebateAmount <= 0) return;
+                if (rebateAmount <= 0) {
+                    rebate.recommendedVehicles = '';
+                    rebate.recommendedTime = '';
+                    return;
+                }
 
-                // 解析供货车型（支持逗号和空格分隔）
+                // 解析可分配车型（用逗号分隔）
                 const rebateVehicles = rebate.vehicles
-                    .split(/[,\s]+/) // 用逗号或空格分隔
+                    .split(',')
                     .map(v => v.trim())
                     .filter(v => v);
-                if (rebateVehicles.length === 0) return;
+
+                if (rebateVehicles.length === 0) {
+                    rebate.recommendedVehicles = '';
+                    rebate.recommendedTime = '';
+                    return;
+                }
 
                 // 解析签署时间范围
                 const startQ = parseQuarter(rebate.earliestSignQuarter);
@@ -1054,44 +1079,71 @@
                     applicableQuarters = [...quarters];
                 }
 
-                // 找到所有匹配的车型-季度组合
-                const matches = [];
-                rebateVehicles.forEach(vehicleCode => {
-                    if (gaps[vehicleCode]) {
-                        applicableQuarters.forEach(quarter => {
-                            if (gaps[vehicleCode][quarter] && gaps[vehicleCode][quarter].original > 0) {
-                                matches.push({ vehicle: vehicleCode, quarter: quarter });
-                            }
-                        });
-                    }
-                });
+                // 4. 按季度优先级（Q1>Q2>Q3>Q4）尝试分配
+                let allocated = false;
+                for (const quarter of applicableQuarters) {
+                    if (allocated) break;
 
-                // 如果没有匹配的缺口，跳过
-                if (matches.length === 0) return;
-
-                // 计算每个匹配组合的缺口总和，按比例分配返利
-                let totalMatchedGap = 0;
-                matches.forEach(m => {
-                    const remainingGap = gaps[m.vehicle][m.quarter].original - gaps[m.vehicle][m.quarter].allocated;
-                    totalMatchedGap += remainingGap;
-                });
-
-                // 按缺口比例分配返利金额
-                matches.forEach(m => {
-                    const remainingGap = gaps[m.vehicle][m.quarter].original - gaps[m.vehicle][m.quarter].allocated;
-                    const proportion = remainingGap / totalMatchedGap;
-                    const allocatedToThis = rebateAmount * proportion;
-
-                    gaps[m.vehicle][m.quarter].allocated += allocatedToThis;
-                    gaps[m.vehicle][m.quarter].sources.push({
-                        rebateId: rebate.id,
-                        supplier: rebate.supplier || '未知',
-                        amount: allocatedToThis
+                    // 在当前季度内，找出所有可分配车型中有剩余缺口的车型
+                    const candidateVehicles = [];
+                    rebateVehicles.forEach(vehicleCode => {
+                        if (remainingGaps[vehicleCode] && remainingGaps[vehicleCode][quarter] > 0) {
+                            candidateVehicles.push({
+                                code: vehicleCode,
+                                gap: remainingGaps[vehicleCode][quarter]
+                            });
+                        }
                     });
-                });
+
+                    if (candidateVehicles.length === 0) continue;
+
+                    // 选择缺口最大的车型（均衡策略）
+                    candidateVehicles.sort((a, b) => b.gap - a.gap);
+                    const selectedVehicle = candidateVehicles[0];
+
+                    // 检查该缺口是否>=返利金额
+                    if (selectedVehicle.gap >= rebateAmount) {
+                        // 可以完整分配
+                        remainingGaps[selectedVehicle.code][quarter] -= rebateAmount;
+                        allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
+                        allocationResults[selectedVehicle.code][quarter].sources.push({
+                            rebateId: rebate.id,
+                            supplier: rebate.supplier || '未知',
+                            amount: rebateAmount
+                        });
+
+                        // 更新推荐落地车型和时间
+                        rebate.recommendedVehicles = selectedVehicle.code;
+                        rebate.recommendedTime = `2026.${quarter}`;
+                        allocated = true;
+                    } else if (selectedVehicle.gap > 0) {
+                        // 缺口不足，但仍然分配（部分填充）
+                        remainingGaps[selectedVehicle.code][quarter] = 0;
+                        allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
+                        allocationResults[selectedVehicle.code][quarter].sources.push({
+                            rebateId: rebate.id,
+                            supplier: rebate.supplier || '未知',
+                            amount: rebateAmount
+                        });
+
+                        rebate.recommendedVehicles = selectedVehicle.code;
+                        rebate.recommendedTime = `2026.${quarter}`;
+                        allocated = true;
+                    }
+                }
+
+                // 如果没有分配成功（没有匹配的缺口），标记为未分配
+                if (!allocated) {
+                    rebate.recommendedVehicles = '无匹配缺口';
+                    rebate.recommendedTime = '-';
+                }
             });
 
-            return gaps;
+            // 保存更新后的返利数据（包含推荐落地车型和时间）
+            saveRebateData();
+            renderRebateTable();
+
+            return allocationResults;
         }
 
         // 渲染分配结果表格
