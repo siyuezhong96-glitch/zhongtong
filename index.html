@@ -277,6 +277,30 @@
         .table-wrapper::-webkit-scrollbar-thumb:hover {
             background: #ff1493;
         }
+
+        /* 返利情况表格滚动样式 */
+        #rebateTableWrapper {
+            max-height: 750px;
+            overflow-y: auto;
+        }
+
+        #rebateTableWrapper::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        #rebateTableWrapper::-webkit-scrollbar-track {
+            background: #fff5f8;
+            border-radius: 6px;
+        }
+
+        #rebateTableWrapper::-webkit-scrollbar-thumb {
+            background: #ff69b4;
+            border-radius: 6px;
+        }
+
+        #rebateTableWrapper::-webkit-scrollbar-thumb:hover {
+            background: #ff1493;
+        }
     </style>
 </head>
 <body>
@@ -311,7 +335,7 @@
                 <button class="add-button" onclick="clearAllRebateData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有返利数据</button>
                 <input type="file" id="rebateFileInput" accept=".csv,.txt" style="display:none;" onchange="importRebateData(event)">
             </div>
-            <div class="table-wrapper">
+            <div class="table-wrapper" id="rebateTableWrapper">
                 <table class="data-table" id="rebateTable">
                     <thead>
                         <tr>
