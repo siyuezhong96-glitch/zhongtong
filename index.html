@@ -712,7 +712,13 @@
                     if (value) {
                         const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
                         if (input) {
-                            input.value = value;
+                            // 格式化为千分符和两位小数显示
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                                input.value = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            } else {
+                                input.value = value;
+                            }
                         }
                     }
                 });
@@ -870,7 +876,8 @@
 
         // 处理指标缺口数据
         function processGapData(jsonData) {
-            console.log('Excel数据:', jsonData); // 调试信息
+            console.log('==== 开始处理缺口数据 ====');
+            console.log('Excel数据:', jsonData);
 
             if (!jsonData || jsonData.length === 0) {
                 alert('文件为空，请检查文件内容！');
@@ -882,7 +889,7 @@
             const firstRow = jsonData[0];
             if (firstRow && (firstRow[0] === '车型' || String(firstRow[1]).includes('Q1'))) {
                 startIndex = 1;
-                console.log('检测到表头:', firstRow);
+                console.log('检测到表头，从第2行开始:', firstRow);
             }
 
             let importCount = 0;
@@ -895,38 +902,54 @@
                 const vehicleCode = String(row[0] || '').trim();
                 if (!vehicleCode) continue;
 
+                console.log(`处理第${i+1}行: 车型=${vehicleCode}, 数据=`, row);
+
                 const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
 
                 if (!vehicle) {
+                    console.error(`车型不匹配: ${vehicleCode}`);
                     errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04）`);
                     continue;
                 }
 
+                console.log(`找到车型: code=${vehicle.code}, name=${vehicle.name}`);
+
                 // 导入4个季度的数据
                 quarters.forEach((quarter, idx) => {
                     const value = row[idx + 1];
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    const selector = `#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`;
+                    const input = document.querySelector(selector);
+
+                    console.log(`  ${quarter}: 值=${value}, 选择器=${selector}, 找到输入框=${!!input}`);
 
                     if (input) {
                         if (value === undefined || value === '' || value === null) {
                             input.value = '0.00';
                             saveGapData(vehicle.code, quarter, '0.00');
+                            console.log(`    设置为0.00`);
                         } else {
                             const numValue = parseFloat(value);
                             if (!isNaN(numValue)) {
-                                input.value = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                const formattedValue = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                input.value = formattedValue;
                                 saveGapData(vehicle.code, quarter, numValue);
+                                console.log(`    设置为${formattedValue}, 保存=${numValue}`);
                             } else {
                                 input.value = '0.00';
                                 saveGapData(vehicle.code, quarter, '0.00');
+                                console.log(`    无效值，设置为0.00`);
                             }
                         }
+                    } else {
+                        console.error(`    未找到输入框！`);
                     }
                 });
 
                 updateVehicleTotal(vehicle.code);
                 importCount++;
             }
+
+            console.log(`==== 导入完成: ${importCount}个车型 ====`);
 
             updateGapSummaryRow();
             updateSummary();
