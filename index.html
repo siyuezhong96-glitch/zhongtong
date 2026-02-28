@@ -48,12 +48,12 @@
 
         /* 系统功能描述 */
         .system-feature {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
+            background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%);
+            color: #ff1493;
             padding: 20px 30px;
-            border-radius: 15px;
+            border-radius: 10px;
             margin-bottom: 30px;
-            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.3);
+            box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
             animation: fadeInUp 0.6s ease-out;
         }
 
@@ -70,7 +70,7 @@
 
         .section {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
@@ -108,11 +108,11 @@
         }
 
         .data-table th:first-child {
-            border-top-left-radius: 12px;
+            border-top-left-radius: 8px;
         }
 
         .data-table th:last-child {
-            border-top-right-radius: 12px;
+            border-top-right-radius: 8px;
         }
 
         .data-table td {
@@ -135,7 +135,7 @@
             min-width: 80px;
             padding: 8px;
             border: 2px solid #ffc0cb;
-            border-radius: 8px;
+            border-radius: 5px;
             font-size: 0.95em;
             transition: all 0.3s ease;
             background: white;
@@ -166,7 +166,7 @@
             background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
             color: white;
             border: none;
-            border-radius: 20px;
+            border-radius: 12px;
             font-size: 1em;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -183,7 +183,7 @@
             background: #ff69b4;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             font-size: 0.9em;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -195,7 +195,7 @@
 
         .summary-section {
             background: white;
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
             box-shadow: 0 8px 20px rgba(255, 105, 180, 0.2);
@@ -220,7 +220,7 @@
             text-align: center;
             padding: 15px;
             background: linear-gradient(135deg, #fff5f8 0%, #ffe4f0 100%);
-            border-radius: 15px;
+            border-radius: 10px;
             border: 2px solid #ffc0cb;
         }
 
@@ -283,7 +283,7 @@
             overflow-x: auto;
             max-width: 100%;
             border: 2px solid #ffc0cb;
-            border-radius: 12px;
+            border-radius: 8px;
         }
 
         .table-wrapper::-webkit-scrollbar {
@@ -292,12 +292,12 @@
 
         .table-wrapper::-webkit-scrollbar-track {
             background: #fff5f8;
-            border-radius: 6px;
+            border-radius: 4px;
         }
 
         .table-wrapper::-webkit-scrollbar-thumb {
             background: #ff69b4;
-            border-radius: 6px;
+            border-radius: 4px;
         }
 
         .table-wrapper::-webkit-scrollbar-thumb:hover {
@@ -316,12 +316,12 @@
 
         #rebateTableWrapper::-webkit-scrollbar-track {
             background: #fff5f8;
-            border-radius: 6px;
+            border-radius: 4px;
         }
 
         #rebateTableWrapper::-webkit-scrollbar-thumb {
             background: #ff69b4;
-            border-radius: 6px;
+            border-radius: 4px;
         }
 
         #rebateTableWrapper::-webkit-scrollbar-thumb:hover {
@@ -350,7 +350,7 @@
         /* 使用说明样式 */
         .usage-guide {
             background: linear-gradient(135deg, #fff9f0 0%, #ffe4f0 100%);
-            border-radius: 20px;
+            border-radius: 12px;
             padding: 30px;
             margin-bottom: 30px;
             border-left: 5px solid #ff69b4;
@@ -375,7 +375,7 @@
         .step {
             background: white;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 6px;
             border-left: 3px solid #ff69b4;
         }
 
@@ -513,7 +513,7 @@
                     </tbody>
                 </table>
             </div>
-            <div style="margin-top: 15px; padding: 15px; background: #fff5f8; border-radius: 10px; border: 2px solid #ffc0cb;">
+            <div style="margin-top: 15px; padding: 15px; background: #fff5f8; border-radius: 6px; border: 2px solid #ffc0cb;">
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
                     <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
@@ -521,7 +521,7 @@
                     <li>季度优先级：Q1 > Q2 > Q3 > Q4，优先关闭早期缺口</li>
                     <li>车型选择策略：在同一季度内优先分配给缺口最大的车型</li>
                     <li>提报日期早的返利优先分配，提报日期为空时系统自动参考前后记录推断</li>
-                    <li>颜色说明：<span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">绿色=完全填充(100%)</span> <span style="background: #fff3cd; padding: 2px 8px; border-radius: 4px;">黄色=填充>50%</span> <span style="background: #ffe4e1; padding: 2px 8px; border-radius: 4px;">浅红=填充<20%</span></li>
+                    <li>颜色说明：<span style="background: #d4edda; padding: 2px 8px; border-radius: 3px;">绿色=完全填充(100%)</span> <span style="background: #fff3cd; padding: 2px 8px; border-radius: 3px;">黄色=填充>50%</span> <span style="background: #ffe4e1; padding: 2px 8px; border-radius: 3px;">浅红=填充<20%</span></li>
                 </ul>
             </div>
         </div>
