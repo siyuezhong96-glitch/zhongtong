@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>返利排期管理系统</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☀️</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
     <style>
         * {
             margin: 0;
@@ -253,7 +253,7 @@
 <body>
     <div class="container">
         <header>
-            <h1>☀️ 返利排期管理系统</h1>
+            <h1>💰 返利排期管理系统</h1>
             <p class="subtitle">管理车型指标缺口与返利排期，智能分配资金填补缺口</p>
         </header>
 
@@ -291,11 +291,11 @@
                             <th style="width: 120px;">返利金额（元）</th>
                             <th style="width: 160px;">供应商名称</th>
                             <th style="width: 130px;">供货车型</th>
-                            <th style="width: 130px;">推荐落地车型</th>
-                            <th style="width: 130px;">推荐落地时间</th>
                             <th style="width: 120px;">最早签署时间</th>
                             <th style="width: 120px;">最迟签署时间</th>
                             <th style="width: 180px;">备注</th>
+                            <th style="width: 130px;">推荐落地车型</th>
+                            <th style="width: 130px;">推荐落地时间</th>
                             <th style="width: 70px;">操作</th>
                         </tr>
                     </thead>
@@ -701,11 +701,11 @@
                     <td><input type="number" value="${item.amount || ''}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01"></td>
                     <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商"></td>
                     <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02"></td>
-                    <td><input type="text" value="${item.recommendedVehicles || ''}" onchange="updateRebateField(${item.id}, 'recommendedVehicles', this.value)" placeholder="X01,X02"></td>
-                    <td><input type="text" value="${item.recommendedTime || ''}" onchange="updateRebateField(${item.id}, 'recommendedTime', this.value)" placeholder="2026.Q1"></td>
                     <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1"></td>
                     <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2"></td>
                     <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
+                    <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedVehicles || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
+                    <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedTime || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
                 </tr>`;
             });
@@ -726,11 +726,11 @@
 
         // 下载返利记录模板
         function downloadRebateTemplate() {
-            // 创建CSV内容
-            let csv = '\uFEFF采购经理,返利类型,返利金额(元),供应商名称,供货车型,推荐落地车型,推荐落地时间,最早签署时间,最迟签署时间,备注\n';
+            // 创建CSV内容（不包含系统生成的字段）
+            let csv = '\uFEFF采购经理,返利类型,返利金额(元),供应商名称,供货车型,最早签署时间,最迟签署时间,备注\n';
             // 添加示例行
-            csv += '张三,一般一次性返利,100000,供应商A,X01,X01,2026.Q1,2026.Q1,2026.Q2,示例备注\n';
-            csv += '李四,阶梯返利,200000,供应商B,"X01,X02","X01,X02",2026.Q2,2026.Q2,2026.Q3,\n';
+            csv += '张三,一般一次性返利,100000,供应商A,X01,2026.Q1,2026.Q2,示例备注\n';
+            csv += '李四,阶梯返利,200000,供应商B,"X01,X02",2026.Q2,2026.Q3,多车型示例\n';
 
             // 创建下载
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -834,6 +834,7 @@
                 }
 
                 // 创建新的返利记录，缺失字段自动填空
+                // 新模板字段顺序：采购经理,返利类型,返利金额,供应商,供货车型,最早签署时间,最迟签署时间,备注
                 rebateData.push({
                     id: rebateIdCounter++,
                     manager: parts[0] || '',
@@ -841,11 +842,11 @@
                     amount: parts[2] || '',
                     supplier: parts[3] || '',
                     vehicles: parts[4] || '',
-                    recommendedVehicles: parts[5] || '',
-                    recommendedTime: parts[6] || '',
-                    earliestSignQuarter: parts[7] || '',
-                    latestSignQuarter: parts[8] || '',
-                    note: parts[9] || ''
+                    earliestSignQuarter: parts[5] || '',
+                    latestSignQuarter: parts[6] || '',
+                    note: parts[7] || '',
+                    recommendedVehicles: '', // 系统生成，导入时留空
+                    recommendedTime: '' // 系统生成，导入时留空
                 });
 
                 importCount++;
