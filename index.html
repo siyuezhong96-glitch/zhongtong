@@ -1127,6 +1127,8 @@
                 if (!row || row.length === 0) continue;
 
                 console.log(`返利第${i+1}行数据:`, row);
+                console.log(`  - row[3] 返利单价:`, row[3], typeof row[3]);
+                console.log(`  - row[4] 单价返利车型:`, row[4], typeof row[4]);
 
                 // 字段顺序：提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*
                 if (row.length < 2) {
@@ -1140,14 +1142,21 @@
                 const businessStartTime = row[8] ? String(row[8]) : '';
                 const businessEndTime = row[9] ? String(row[9]) : '';
 
+                // 处理返利单价和单价返利车型（可能为undefined或空字符串）
+                const unitPrice = (row[3] !== undefined && row[3] !== null && row[3] !== '') ? String(row[3]) : '';
+                const unitPriceVehicles = (row[4] !== undefined && row[4] !== null && row[4] !== '') ? String(row[4]) : '';
+
+                console.log(`  - 处理后 unitPrice:`, unitPrice);
+                console.log(`  - 处理后 unitPriceVehicles:`, unitPriceVehicles);
+
                 // 创建新的返利记录
                 rebateData.push({
                     id: rebateIdCounter++,
                     submitDate: submitDate,
                     manager: row[1] ? String(row[1]) : '',
                     type: row[2] ? String(row[2]) : '',
-                    unitPrice: row[3] ? String(row[3]) : '',
-                    unitPriceVehicles: row[4] ? String(row[4]) : '',
+                    unitPrice: unitPrice,
+                    unitPriceVehicles: unitPriceVehicles,
                     partsSOR: row[5] ? String(row[5]) : '',
                     supplier: row[6] ? String(row[6]) : '',
                     vehicles: row[7] ? String(row[7]) : '',
