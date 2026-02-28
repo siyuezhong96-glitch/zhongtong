@@ -911,29 +911,29 @@
                 html += `<tr>
                     <td style="font-size: 0.85em; color: #888;">${index + 1}</td>
                     <td><input type="date" value="${item.submitDate || ''}" onchange="updateRebateField(${item.id}, 'submitDate', this.value)"></td>
-                    <td><input type="text" value="${item.manager || ''}" onchange="updateRebateField(${item.id}, 'manager', this.value)" placeholder="姓名" required></td>
+                    <td><input type="text" value="${item.manager || ''}" onchange="updateRebateField(${item.id}, 'manager', this.value)" required></td>
                     <td>
                         <select onchange="updateRebateField(${item.id}, 'type', this.value)" required>
                             <option value="">请选择</option>
                             ${rebateTypes.map(t => `<option value="${t}" ${item.type === t ? 'selected' : ''}>${t}</option>`).join('')}
                         </select>
                     </td>
-                    <td><input type="number" value="${item.unitPrice || ''}" onchange="updateRebateField(${item.id}, 'unitPrice', this.value)" placeholder="0.00" step="0.01"></td>
-                    <td><input type="text" value="${item.unitPriceVehicles || ''}" onchange="updateRebateField(${item.id}, 'unitPriceVehicles', this.value)" placeholder="X01,X02"></td>
-                    <td><input type="text" value="${item.partsSOR || ''}" onchange="updateRebateField(${item.id}, 'partsSOR', this.value)" placeholder="零件/SOR包"></td>
-                    <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" placeholder="供应商名称" required></td>
-                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" placeholder="X01,X02" required></td>
-                    <td><input type="text" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)" placeholder="202601"></td>
-                    <td><input type="text" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)" placeholder="202603"></td>
-                    <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" placeholder="2026.Q1" required></td>
-                    <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" placeholder="2026.Q2" required></td>
-                    <td><input type="text" value="${item.attachment || ''}" onchange="updateRebateField(${item.id}, 'attachment', this.value)" placeholder="附件链接"></td>
-                    <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
-                    <td><input type="text" value="${item.calculationUnit || ''}" onchange="updateRebateField(${item.id}, 'calculationUnit', this.value)" placeholder="量纲"></td>
-                    <td><input type="text" class="rebate-amount-input" data-rebate-id="${item.id}" value="${formatAmountDisplay(item.amount)}" placeholder="0.00" required></td>
-                    <td><input type="text" value="${item.supplierCode || ''}" onchange="updateRebateField(${item.id}, 'supplierCode', this.value)" placeholder="编码" required></td>
-                    <td><input type="text" value="${item.department1 || ''}" onchange="updateRebateField(${item.id}, 'department1', this.value)" placeholder="一级部门" required></td>
-                    <td><input type="text" value="${item.department2 || ''}" onchange="updateRebateField(${item.id}, 'department2', this.value)" placeholder="二级部门" required></td>
+                    <td><input type="number" value="${item.unitPrice || ''}" onchange="updateRebateField(${item.id}, 'unitPrice', this.value)" step="0.01"></td>
+                    <td><input type="text" value="${item.unitPriceVehicles || ''}" onchange="updateRebateField(${item.id}, 'unitPriceVehicles', this.value)"></td>
+                    <td><input type="text" value="${item.partsSOR || ''}" onchange="updateRebateField(${item.id}, 'partsSOR', this.value)"></td>
+                    <td><input type="text" value="${item.supplier || ''}" onchange="updateRebateField(${item.id}, 'supplier', this.value)" required></td>
+                    <td><input type="text" value="${item.vehicles || ''}" onchange="updateRebateField(${item.id}, 'vehicles', this.value)" required></td>
+                    <td><input type="text" value="${item.businessStartTime || ''}" onchange="updateRebateField(${item.id}, 'businessStartTime', this.value)"></td>
+                    <td><input type="text" value="${item.businessEndTime || ''}" onchange="updateRebateField(${item.id}, 'businessEndTime', this.value)"></td>
+                    <td><input type="text" value="${item.earliestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'earliestSignQuarter', this.value)" required></td>
+                    <td><input type="text" value="${item.latestSignQuarter || ''}" onchange="updateRebateField(${item.id}, 'latestSignQuarter', this.value)" required></td>
+                    <td><input type="text" value="${item.attachment || ''}" onchange="updateRebateField(${item.id}, 'attachment', this.value)"></td>
+                    <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)"></td>
+                    <td><input type="text" value="${item.calculationUnit || ''}" onchange="updateRebateField(${item.id}, 'calculationUnit', this.value)"></td>
+                    <td><input type="text" class="rebate-amount-input" data-rebate-id="${item.id}" value="${formatAmountDisplay(item.amount)}" required></td>
+                    <td><input type="text" value="${item.supplierCode || ''}" onchange="updateRebateField(${item.id}, 'supplierCode', this.value)" required></td>
+                    <td><input type="text" value="${item.department1 || ''}" onchange="updateRebateField(${item.id}, 'department1', this.value)" required></td>
+                    <td><input type="text" value="${item.department2 || ''}" onchange="updateRebateField(${item.id}, 'department2', this.value)" required></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedVehicles || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedTime || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
