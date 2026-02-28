@@ -472,16 +472,30 @@
 
             // 添加事件监听
             document.querySelectorAll('#gapTable input').forEach(input => {
+                // 获取焦点时去除千分符，便于编辑
+                input.addEventListener('focus', function() {
+                    if (this.value) {
+                        // 去除千分符
+                        this.value = this.value.replace(/,/g, '');
+                    }
+                });
+
                 input.addEventListener('input', function() {
-                    saveGapData(this.dataset.vehicle, this.dataset.quarter, this.value);
+                    // 保存时去除千分符
+                    const rawValue = this.value.replace(/,/g, '');
+                    saveGapData(this.dataset.vehicle, this.dataset.quarter, rawValue);
                     updateVehicleTotal(this.dataset.vehicle);
                     updateGapSummaryRow();
                     updateSummary();
                 });
 
+                // 失去焦点时格式化为千分符+两位小数
                 input.addEventListener('blur', function() {
                     if (this.value) {
-                        this.value = parseFloat(this.value).toFixed(2);
+                        const num = parseFloat(this.value.replace(/,/g, ''));
+                        if (!isNaN(num)) {
+                            this.value = num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                        }
                     }
                 });
             });
@@ -517,7 +531,8 @@
             quarters.forEach(quarter => {
                 const input = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
                 if (input && input.value) {
-                    total += parseFloat(input.value);
+                    // 去除千分符后再解析
+                    total += parseFloat(input.value.replace(/,/g, ''));
                 }
             });
             const totalElement = document.getElementById(`${vehicleCode}-total`);
@@ -536,7 +551,8 @@
                 vehicles.forEach(vehicle => {
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
                     if (input && input.value) {
-                        quarterTotal += parseFloat(input.value);
+                        // 去除千分符后再解析
+                        quarterTotal += parseFloat(input.value.replace(/,/g, ''));
                     }
                 });
                 grandTotal += quarterTotal;
@@ -684,8 +700,8 @@
                         } else {
                             const numValue = parseFloat(value);
                             if (!isNaN(numValue)) {
-                                input.value = numValue.toFixed(2);
-                                saveGapData(vehicle.code, quarter, input.value);
+                                input.value = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                                saveGapData(vehicle.code, quarter, numValue);
                             } else {
                                 // 无效数值也设为0
                                 input.value = '0.00';
@@ -785,6 +801,14 @@
             }
         }
 
+        // 格式化金额显示（千分符+两位小数）
+        function formatAmountDisplay(value) {
+            if (!value || value === '') return '';
+            const num = parseFloat(value.toString().replace(/,/g, ''));
+            if (isNaN(num)) return '';
+            return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
         // 渲染返利表格
         function renderRebateTable() {
             const tbody = document.getElementById('rebateTableBody');
@@ -817,7 +841,7 @@
                     <td><input type="text" value="${item.attachment || ''}" onchange="updateRebateField(${item.id}, 'attachment', this.value)" placeholder="附件链接"></td>
                     <td><input type="text" value="${item.note || ''}" onchange="updateRebateField(${item.id}, 'note', this.value)" placeholder="备注"></td>
                     <td><input type="text" value="${item.calculationUnit || ''}" onchange="updateRebateField(${item.id}, 'calculationUnit', this.value)" placeholder="量纲"></td>
-                    <td><input type="number" value="${item.amount || ''}" onchange="updateRebateField(${item.id}, 'amount', this.value)" placeholder="0.00" step="0.01" required></td>
+                    <td><input type="text" class="rebate-amount-input" data-rebate-id="${item.id}" value="${formatAmountDisplay(item.amount)}" placeholder="0.00" required></td>
                     <td><input type="text" value="${item.supplierCode || ''}" onchange="updateRebateField(${item.id}, 'supplierCode', this.value)" placeholder="编码" required></td>
                     <td><input type="text" value="${item.department1 || ''}" onchange="updateRebateField(${item.id}, 'department1', this.value)" placeholder="一级部门" required></td>
                     <td><input type="text" value="${item.department2 || ''}" onchange="updateRebateField(${item.id}, 'department2', this.value)" placeholder="二级部门" required></td>
@@ -827,6 +851,32 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+
+            // 为返利金额输入框添加格式化事件监听
+            document.querySelectorAll('.rebate-amount-input').forEach(input => {
+                // 获取焦点时去除千分符，便于编辑
+                input.addEventListener('focus', function() {
+                    if (this.value) {
+                        this.value = this.value.replace(/,/g, '');
+                    }
+                });
+
+                // 失去焦点时格式化为千分符+两位小数
+                input.addEventListener('blur', function() {
+                    const rebateId = parseInt(this.dataset.rebateId);
+                    const rawValue = this.value.replace(/,/g, '');
+
+                    if (rawValue) {
+                        const num = parseFloat(rawValue);
+                        if (!isNaN(num)) {
+                            this.value = num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                            updateRebateField(rebateId, 'amount', num);
+                        }
+                    } else {
+                        updateRebateField(rebateId, 'amount', '');
+                    }
+                });
+            });
         }
 
         // 更新返利字段
@@ -1243,7 +1293,8 @@
                 quarters.forEach(quarter => {
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
                     if (input && input.value) {
-                        totalGap += parseFloat(input.value);
+                        // 去除千分符后再解析
+                        totalGap += parseFloat(input.value.replace(/,/g, ''));
                     }
                 });
             });
@@ -1252,6 +1303,7 @@
             let totalRebate = 0;
             rebateData.forEach(item => {
                 if (item.amount) {
+                    // item.amount存储的是原始数值，不需要去除千分符
                     totalRebate += parseFloat(item.amount);
                 }
             });
