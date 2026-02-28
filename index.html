@@ -500,6 +500,7 @@
                 <button class="add-button" onclick="addRebateRow()">➕ 添加返利记录</button>
                 <button class="add-button" onclick="downloadRebateTemplate()">📥 下载返利模板</button>
                 <button class="add-button" onclick="document.getElementById('rebateFileInput').click()">📤 导入返利数据</button>
+                <button class="add-button" onclick="exportRebateData()" style="background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%);">💾 导出返利数据</button>
                 <button class="add-button" onclick="clearAllRebateData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有返利数据</button>
                 <input type="file" id="rebateFileInput" accept=".csv,.txt" style="display:none;" onchange="importRebateData(event)">
             </div>
@@ -1099,6 +1100,73 @@
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = '返利记录模板.csv';
+            link.click();
+        }
+
+        // 导出返利数据
+        function exportRebateData() {
+            if (rebateData.length === 0) {
+                alert('暂无返利数据可导出');
+                return;
+            }
+
+            // CSV表头（包含所有21个字段+2个系统生成字段）
+            let csv = '\uFEFF提报日期,采购经理*,返利类型*,返利单价,单价返利车型,零件/SOR包,供应商名称*,供应商供货车型*,业务发生时间起点,业务发生时间终点,公函/协议最早签署时间*,公函/协议最迟签署时间*,附件,备注,返利计算量纲,返利金额*,供应商编码*,采购-一级部门*,采购-二级部门*,推荐落地车型,推荐落地时间\n';
+
+            // 处理CSV特殊字符的函数
+            function escapeCsvField(field) {
+                if (field === null || field === undefined) {
+                    return '';
+                }
+                const str = String(field);
+                // 如果包含逗号、引号或换行符，需要用引号包裹，并将引号转义为两个引号
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return '"' + str.replace(/"/g, '""') + '"';
+                }
+                return str;
+            }
+
+            // 遍历每条返利记录
+            rebateData.forEach(item => {
+                const row = [
+                    escapeCsvField(item.submitDate || ''),
+                    escapeCsvField(item.manager || ''),
+                    escapeCsvField(item.type || ''),
+                    escapeCsvField(item.unitPrice || ''),
+                    escapeCsvField(item.unitPriceVehicles || ''),
+                    escapeCsvField(item.partsSOR || ''),
+                    escapeCsvField(item.supplier || ''),
+                    escapeCsvField(item.vehicles || ''),
+                    escapeCsvField(item.businessStartTime || ''),
+                    escapeCsvField(item.businessEndTime || ''),
+                    escapeCsvField(item.earliestSignQuarter || ''),
+                    escapeCsvField(item.latestSignQuarter || ''),
+                    escapeCsvField(item.attachment || ''),
+                    escapeCsvField(item.note || ''),
+                    escapeCsvField(item.calculationUnit || ''),
+                    escapeCsvField(item.amount || ''),
+                    escapeCsvField(item.supplierCode || ''),
+                    escapeCsvField(item.department1 || ''),
+                    escapeCsvField(item.department2 || ''),
+                    escapeCsvField(item.recommendedVehicles || ''),
+                    escapeCsvField(item.recommendedTime || '')
+                ];
+                csv += row.join(',') + '\n';
+            });
+
+            // 创建下载
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+
+            // 生成带时间戳的文件名
+            const now = new Date();
+            const timestamp = now.getFullYear() +
+                              String(now.getMonth() + 1).padStart(2, '0') +
+                              String(now.getDate()).padStart(2, '0') + '_' +
+                              String(now.getHours()).padStart(2, '0') +
+                              String(now.getMinutes()).padStart(2, '0');
+            link.download = `返利数据_${timestamp}.csv`;
             link.click();
         }
 
