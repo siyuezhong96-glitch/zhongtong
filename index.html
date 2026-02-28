@@ -372,9 +372,10 @@
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
                     <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
-                    <li>返利金额按缺口比例智能分配到匹配的车型-季度组合</li>
-                    <li>颜色说明：<span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">绿色=完全填充</span> <span style="background: #fff3cd; padding: 2px 8px; border-radius: 4px;">黄色=部分填充</span> <span style="background: #ffe4e1; padding: 2px 8px; border-radius: 4px;">浅红=少量填充</span></li>
-                    <li>鼠标悬停可查看该缺口的返利来源供应商</li>
+                    <li>每笔返利完整分配给单一车型-季度，不拆分分配</li>
+                    <li>季度优先级：Q1 > Q2 > Q3 > Q4，优先关闭早期缺口</li>
+                    <li>车型选择策略：在同一季度内优先分配给缺口最大的车型</li>
+                    <li>颜色说明：<span style="background: #d4edda; padding: 2px 8px; border-radius: 4px;">绿色=完全填充(100%)</span> <span style="background: #fff3cd; padding: 2px 8px; border-radius: 4px;">黄色=填充>50%</span> <span style="background: #ffe4e1; padding: 2px 8px; border-radius: 4px;">浅红=填充<20%</span></li>
                 </ul>
             </div>
         </div>
@@ -1200,20 +1201,19 @@
                     const fillRate = data.original > 0 ? (data.allocated / data.original * 100).toFixed(1) : 0;
 
                     // 根据填充情况设置背景色
-                    let bgColor = '#fff5f8';
+                    let bgColor = '#fff5f8'; // 默认浅粉色
                     if (fillRate >= 100) {
                         bgColor = '#d4edda'; // 绿色 - 完全填充
-                    } else if (fillRate >= 50) {
-                        bgColor = '#fff3cd'; // 黄色 - 部分填充
-                    } else if (fillRate > 0) {
-                        bgColor = '#ffe4e1'; // 浅红 - 少量填充
+                    } else if (fillRate > 50) {
+                        bgColor = '#fff3cd'; // 黄色 - 填充超过50%
+                    } else if (fillRate > 0 && fillRate < 20) {
+                        bgColor = '#ffe4e1'; // 浅红 - 填充小于20%
                     }
 
                     html += `<td style="background: ${bgColor}; padding: 8px; font-size: 0.85em;">
                         <div><strong>原始:</strong> ¥${formatCurrency(data.original)}</div>
                         <div style="color: #28a745;"><strong>分配:</strong> ¥${formatCurrency(data.allocated)}</div>
                         <div style="color: ${remaining > 0 ? '#dc3545' : '#28a745'};"><strong>剩余:</strong> ¥${formatCurrency(remaining)}</div>
-                        ${data.sources.length > 0 ? `<div style="font-size: 0.8em; margin-top: 4px; color: #666;">来源: ${data.sources.map(s => s.supplier).join(', ')}</div>` : ''}
                     </td>`;
                 });
 
