@@ -22,6 +22,8 @@
         .container {
             max-width: 1800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 2;
         }
 
         header {
@@ -320,9 +322,156 @@
         #rebateTable select {
             padding: 6px;
         }
+
+        /* 可爱装饰元素 */
+        .decoration-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .float-decoration {
+            position: absolute;
+            animation: float 8s ease-in-out infinite;
+            opacity: 0.6;
+        }
+
+        .float-decoration:nth-child(1) {
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+            animation-duration: 10s;
+        }
+
+        .float-decoration:nth-child(2) {
+            top: 20%;
+            right: 8%;
+            animation-delay: 2s;
+            animation-duration: 12s;
+        }
+
+        .float-decoration:nth-child(3) {
+            top: 60%;
+            left: 3%;
+            animation-delay: 4s;
+            animation-duration: 9s;
+        }
+
+        .float-decoration:nth-child(4) {
+            top: 70%;
+            right: 5%;
+            animation-delay: 1s;
+            animation-duration: 11s;
+        }
+
+        .float-decoration:nth-child(5) {
+            top: 40%;
+            left: 10%;
+            animation-delay: 3s;
+            animation-duration: 13s;
+        }
+
+        .float-decoration:nth-child(6) {
+            top: 50%;
+            right: 12%;
+            animation-delay: 5s;
+            animation-duration: 10s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+            50% {
+                transform: translateY(-10px) rotate(-5deg);
+            }
+            75% {
+                transform: translateY(-15px) rotate(3deg);
+            }
+        }
+
+        /* 页面角落装饰 */
+        .corner-decoration {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.3;
+        }
+
+        .corner-top-left {
+            top: 0;
+            left: 0;
+            font-size: 8em;
+            transform: rotate(-15deg);
+        }
+
+        .corner-top-right {
+            top: 0;
+            right: 0;
+            font-size: 6em;
+            transform: rotate(15deg);
+        }
+
+        .corner-bottom-left {
+            bottom: 20px;
+            left: 0;
+            font-size: 7em;
+            transform: rotate(15deg);
+        }
+
+        .corner-bottom-right {
+            bottom: 20px;
+            right: 0;
+            font-size: 5em;
+            transform: rotate(-20deg);
+        }
+
+        /* 闪烁星星效果 */
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.2);
+            }
+        }
+
+        .twinkle {
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        .twinkle:nth-child(even) {
+            animation-delay: 1.5s;
+        }
     </style>
 </head>
 <body>
+    <!-- 可爱的浮动装饰元素 -->
+    <div class="decoration-container">
+        <div class="float-decoration twinkle" style="font-size: 3em;">💖</div>
+        <div class="float-decoration" style="font-size: 2.5em;">🚗</div>
+        <div class="float-decoration twinkle" style="font-size: 2em;">⭐</div>
+        <div class="float-decoration" style="font-size: 2.8em;">🎀</div>
+        <div class="float-decoration twinkle" style="font-size: 2.2em;">✨</div>
+        <div class="float-decoration" style="font-size: 3em;">💝</div>
+    </div>
+
+    <!-- 页面角落装饰 -->
+    <div class="corner-decoration corner-top-left">🌸</div>
+    <div class="corner-decoration corner-top-right">🎈</div>
+    <div class="corner-decoration corner-bottom-left">🌺</div>
+    <div class="corner-decoration corner-bottom-right">🦋</div>
+
     <div class="container">
         <header>
             <h1>💰 返利排期管理系统</h1>
