@@ -1242,6 +1242,34 @@
             return result;
         }
 
+        // 推断空的提报日期
+        function inferSubmitDate(index) {
+            // 查找前面最近的有效日期
+            let prevDate = null;
+            for (let i = index - 1; i >= 0; i--) {
+                if (rebateData[i].submitDate) {
+                    prevDate = rebateData[i].submitDate;
+                    break;
+                }
+            }
+
+            // 查找后面最近的有效日期
+            let nextDate = null;
+            for (let i = index + 1; i < rebateData.length; i++) {
+                if (rebateData[i].submitDate) {
+                    nextDate = rebateData[i].submitDate;
+                    break;
+                }
+            }
+
+            // 如果前后都有日期，返回前面的日期（假设空日期接近前面的记录）
+            if (prevDate) return prevDate;
+            if (nextDate) return nextDate;
+
+            // 如果都没有，返回一个默认日期（2026-01-01）
+            return '2026-01-01';
+        }
+
         // 执行智能分配（新算法：不拆分返利）
         function performAllocation() {
             // 1. 收集所有缺口数据，创建剩余缺口副本
@@ -1270,19 +1298,47 @@
                 });
             });
 
-            // 3. 遍历返利记录，按顺序分配
-            rebateData.forEach(rebate => {
+            // 3. 创建返利记录的排序副本（按提报日期排序，日期早的优先）
+            const sortedRebates = [...rebateData].map((rebate, index) => {
+                // 如果提报日期为空，推断一个日期
+                const effectiveDate = rebate.submitDate || inferSubmitDate(index);
+                return {
+                    ...rebate,
+                    effectiveDate: effectiveDate,
+                    originalIndex: index
+                };
+            }).sort((a, b) => {
+                // 按提报日期升序排序（早的日期在前）
+                return new Date(a.effectiveDate) - new Date(b.effectiveDate);
+            });
+
+            console.log('按提报日期排序后的返利记录:', sortedRebates.map(r => ({
+                id: r.id,
+                supplier: r.supplier,
+                submitDate: r.submitDate,
+                effectiveDate: r.effectiveDate
+            })));
+
+            // 4. 遍历排序后的返利记录，按顺序分配
+            sortedRebates.forEach(rebate => {
+                // 找到原始的返利记录（用于更新推荐结果）
+                const originalRebate = rebateData.find(r => r.id === rebate.id);
+
                 if (!rebate.amount || !rebate.vehicles) {
                     // 如果没有金额或车型，标记为未分配
-                    rebate.recommendedVehicles = '';
-                    rebate.recommendedTime = '';
+                    if (originalRebate) {
+                        originalRebate.recommendedVehicles = '';
+                        originalRebate.recommendedTime = '';
+                    }
                     return;
                 }
 
                 const rebateAmount = parseFloat(rebate.amount);
                 if (rebateAmount <= 0) {
-                    rebate.recommendedVehicles = '';
-                    rebate.recommendedTime = '';
+                    if (originalRebate) {
+                        originalRebate.recommendedVehicles = '';
+                        originalRebate.recommendedTime = '';
+                    }
                     return;
                 }
 
@@ -1293,8 +1349,10 @@
                     .filter(v => v);
 
                 if (rebateVehicles.length === 0) {
-                    rebate.recommendedVehicles = '';
-                    rebate.recommendedTime = '';
+                    if (originalRebate) {
+                        originalRebate.recommendedVehicles = '';
+                        originalRebate.recommendedTime = '';
+                    }
                     return;
                 }
 
@@ -1347,9 +1405,11 @@
                             amount: rebateAmount
                         });
 
-                        // 更新推荐落地车型和时间
-                        rebate.recommendedVehicles = selectedVehicle.code;
-                        rebate.recommendedTime = `2026.${quarter}`;
+                        // 更新原始记录的推荐落地车型和时间
+                        if (originalRebate) {
+                            originalRebate.recommendedVehicles = selectedVehicle.code;
+                            originalRebate.recommendedTime = `2026.${quarter}`;
+                        }
                         allocated = true;
                     } else if (selectedVehicle.gap > 0) {
                         // 缺口不足，但仍然分配（部分填充）
@@ -1361,16 +1421,19 @@
                             amount: rebateAmount
                         });
 
-                        rebate.recommendedVehicles = selectedVehicle.code;
-                        rebate.recommendedTime = `2026.${quarter}`;
+                        // 更新原始记录的推荐落地车型和时间
+                        if (originalRebate) {
+                            originalRebate.recommendedVehicles = selectedVehicle.code;
+                            originalRebate.recommendedTime = `2026.${quarter}`;
+                        }
                         allocated = true;
                     }
                 }
 
                 // 如果没有分配成功（没有匹配的缺口），标记为未分配
-                if (!allocated) {
-                    rebate.recommendedVehicles = '无匹配缺口';
-                    rebate.recommendedTime = '-';
+                if (!allocated && originalRebate) {
+                    originalRebate.recommendedVehicles = '无匹配缺口';
+                    originalRebate.recommendedTime = '-';
                 }
             });
 
