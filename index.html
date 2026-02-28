@@ -458,6 +458,14 @@
                 html += `<td class="total-cell" id="${vehicle.code}-total">¥0.00</td></tr>`;
             });
 
+            // 汇总行
+            html += `<tr style="background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%); font-weight: 700;">
+                <td class="vehicle-label" style="font-size: 1.1em;">📊 汇总</td>`;
+            quarters.forEach(q => {
+                html += `<td class="total-cell" id="summary-${q}" style="font-size: 1.05em;">¥0.00</td>`;
+            });
+            html += `<td class="total-cell" id="summary-total" style="font-size: 1.1em; color: #ff1493;">¥0.00</td></tr>`;
+
             html += '</tbody>';
             table.innerHTML = html;
 
@@ -466,6 +474,7 @@
                 input.addEventListener('input', function() {
                     saveGapData(this.dataset.vehicle, this.dataset.quarter, this.value);
                     updateVehicleTotal(this.dataset.vehicle);
+                    updateGapSummaryRow();
                     updateSummary();
                 });
 
@@ -498,6 +507,7 @@
                 });
                 updateVehicleTotal(vehicle.code);
             });
+            updateGapSummaryRow();
         }
 
         // 更新单个车型合计
@@ -512,6 +522,34 @@
             const totalElement = document.getElementById(`${vehicleCode}-total`);
             if (totalElement) {
                 totalElement.textContent = `¥${formatCurrency(total)}`;
+            }
+        }
+
+        // 更新汇总行
+        function updateGapSummaryRow() {
+            let grandTotal = 0;
+
+            // 更新每个季度的汇总
+            quarters.forEach(quarter => {
+                let quarterTotal = 0;
+                vehicles.forEach(vehicle => {
+                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input && input.value) {
+                        quarterTotal += parseFloat(input.value);
+                    }
+                });
+                grandTotal += quarterTotal;
+
+                const summaryElement = document.getElementById(`summary-${quarter}`);
+                if (summaryElement) {
+                    summaryElement.textContent = `¥${formatCurrency(quarterTotal)}`;
+                }
+            });
+
+            // 更新总计
+            const summaryTotalElement = document.getElementById('summary-total');
+            if (summaryTotalElement) {
+                summaryTotalElement.textContent = `¥${formatCurrency(grandTotal)}`;
             }
         }
 
@@ -660,6 +698,7 @@
                 importCount++;
             }
 
+            updateGapSummaryRow();
             updateSummary();
 
             let message = `成功导入 ${importCount} 个车型的缺口数据！`;
