@@ -1374,7 +1374,7 @@
                 remainingGaps[vehicle.code] = {};
                 quarters.forEach(quarter => {
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    const gapAmount = input && input.value ? parseFloat(input.value) : 0;
+                    const gapAmount = input && input.value ? parseFloat(input.value.replace(/,/g, '')) : 0;
                     remainingGaps[vehicle.code][quarter] = gapAmount;
                 });
             });
@@ -1385,7 +1385,7 @@
                 allocationResults[vehicle.code] = {};
                 quarters.forEach(quarter => {
                     const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    const gapAmount = input && input.value ? parseFloat(input.value) : 0;
+                    const gapAmount = input && input.value ? parseFloat(input.value.replace(/,/g, '')) : 0;
                     allocationResults[vehicle.code][quarter] = {
                         original: gapAmount,
                         allocated: 0,
