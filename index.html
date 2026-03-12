@@ -591,7 +591,7 @@
             });
             html += '<th style="width: 180px;">合计</th></tr></thead><tbody>';
 
-            // 数据行：每个车型三行（量纲、总指标、缺口）
+            // 数据行：每个车型三行（量纲、单车维度缺口、缺口）
             vehicles.forEach(vehicle => {
                 // 第一行：量纲
                 html += `<tr><td class="vehicle-label" rowspan="3" style="vertical-align: middle;">${vehicle.icon} ${vehicle.name}</td>
@@ -609,8 +609,8 @@
                 });
                 html += `<td class="total-cell" id="${vehicle.code}-dimension-total">0</td></tr>`;
 
-                // 第二行：总指标
-                html += `<tr><td style="background: #f0f8ff; font-weight: 600; color: #ff69b4;">总指标（供应链-采购指标）<br>KPI口径缺口-合计（-过达/+缺口）</td>`;
+                // 第二行：单车维度缺口
+                html += `<tr><td style="background: #f0f8ff; font-weight: 600; color: #ff69b4;">单车维度缺口</td>`;
                 quarters.forEach(q => {
                     html += `<td>
                         <input type="number"
@@ -671,7 +671,7 @@
             localStorage.setItem(key, value);
         }
 
-        // 计算缺口（量纲 × 总指标）
+        // 计算缺口（量纲 × 单车维度缺口）
         function calculateGap(vehicle, quarter) {
             const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle}"][data-quarter="${quarter}"][data-type="dimension"]`);
             const indicatorInput = document.querySelector(`#gapTable [data-vehicle="${vehicle}"][data-quarter="${quarter}"][data-type="indicator"]`);
@@ -703,7 +703,7 @@
                         }
                     }
 
-                    // 加载总指标
+                    // 加载单车维度缺口
                     const indicatorKey = `gap_${vehicle.code}_${quarter}_indicator`;
                     const indicatorValue = localStorage.getItem(indicatorKey);
                     if (indicatorValue) {
@@ -761,7 +761,7 @@
             alert('所有缺口数据已清除！');
         }
 
-        // 更新单个车型的量纲、总指标、缺口合计
+        // 更新单个车型的量纲、单车维度缺口、缺口合计
         function updateVehicleGapTotal(vehicleCode) {
             let dimensionTotal = 0;
             let indicatorTotal = 0;
@@ -788,7 +788,7 @@
                 dimensionTotalElement.textContent = dimensionTotal.toFixed(0);
             }
 
-            // 更新总指标合计
+            // 更新单车维度缺口合计
             const indicatorTotalElement = document.getElementById(`${vehicleCode}-indicator-total`);
             if (indicatorTotalElement) {
                 indicatorTotalElement.textContent = `¥${formatCurrency(indicatorTotal)}`;
@@ -833,12 +833,12 @@
             // 创建表头
             const data = [['车型', '指标类型', '2026 Q1', '2026 Q2', '2026 Q3', '2026 Q4']];
 
-            // 每个车型两行：量纲行和总指标行
+            // 每个车型两行：量纲行和单车维度缺口行
             vehicles.forEach(vehicle => {
                 // 量纲行
                 data.push([vehicle.name, '量纲', 0, 0, 0, 0]);
-                // 总指标行
-                data.push([vehicle.name, '总指标（供应链-采购指标）KPI口径缺口-合计（-过达/+缺口）', 0, 0, 0, 0]);
+                // 单车维度缺口行
+                data.push([vehicle.name, '单车维度缺口', 0, 0, 0, 0]);
             });
 
             // 创建工作表
@@ -951,14 +951,14 @@
                     continue;
                 }
 
-                // 判断是量纲还是总指标
+                // 判断是量纲还是单车维度缺口
                 let dataType = '';
                 if (indicatorType.includes('量纲') || indicatorType === '量纲') {
                     dataType = 'dimension';
-                } else if (indicatorType.includes('总指标') || indicatorType.includes('KPI口径') || indicatorType.includes('缺口')) {
+                } else if (indicatorType.includes('单车维度缺口') || indicatorType.includes('总指标') || indicatorType.includes('KPI口径') || indicatorType.includes('缺口')) {
                     dataType = 'indicator';
                 } else {
-                    errorLines.push(`第${i+1}行：无法识别指标类型"${indicatorType}"（应为"量纲"或"总指标..."）`);
+                    errorLines.push(`第${i+1}行：无法识别指标类型"${indicatorType}"（应为"量纲"或"单车维度缺口"）`);
                     continue;
                 }
 
@@ -1696,7 +1696,7 @@
 
         // ===== 统计汇总 =====
         function updateSummary() {
-            // 计算总指标缺口（使用计算后的缺口值，负值表示过达，不计入缺口统计）
+            // 计算总缺口（使用计算后的缺口值，负值表示过达，不计入缺口统计）
             let totalGap = 0;
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
