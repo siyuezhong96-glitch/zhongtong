@@ -515,6 +515,7 @@
             <div style="margin-top: 15px; padding: 15px; background: #fff5f8; border-radius: 6px; border: 2px solid #ffc0cb;">
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
+                    <li>缺口为负值表示指标已过达，不需要分配返利，系统将自动忽略</li>
                     <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
                     <li>每笔返利完整分配给单一车型-季度，不拆分分配</li>
                     <li>季度优先级：Q1 > Q2 > Q3 > Q4，优先关闭早期缺口</li>
@@ -804,12 +805,13 @@
         function updateGapSummaryRow() {
             let grandTotal = 0;
 
-            // 更新每个季度的汇总（仅汇总缺口）
+            // 更新每个季度的汇总（仅汇总正值缺口，负值表示过达）
             quarters.forEach(quarter => {
                 let quarterTotal = 0;
                 vehicles.forEach(vehicle => {
                     const gap = calculateGap(vehicle.code, quarter);
-                    quarterTotal += gap;
+                    // 只累加正值缺口
+                    quarterTotal += Math.max(0, gap);
                 });
                 grandTotal += quarterTotal;
 
@@ -1476,9 +1478,9 @@
             vehicles.forEach(vehicle => {
                 remainingGaps[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    // 使用计算后的缺口值
+                    // 使用计算后的缺口值，负值表示过达，设为0（不需要分配）
                     const gapAmount = calculateGap(vehicle.code, quarter);
-                    remainingGaps[vehicle.code][quarter] = gapAmount;
+                    remainingGaps[vehicle.code][quarter] = Math.max(0, gapAmount);
                 });
             });
 
@@ -1487,7 +1489,7 @@
             vehicles.forEach(vehicle => {
                 allocationResults[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    // 使用计算后的缺口值
+                    // 使用计算后的缺口值，负值表示过达，设为0
                     const gapAmount = calculateGap(vehicle.code, quarter);
                     allocationResults[vehicle.code][quarter] = {
                         original: gapAmount,
@@ -1694,12 +1696,13 @@
 
         // ===== 统计汇总 =====
         function updateSummary() {
-            // 计算总指标缺口（使用计算后的缺口值）
+            // 计算总指标缺口（使用计算后的缺口值，负值表示过达，不计入缺口统计）
             let totalGap = 0;
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
                     const gap = calculateGap(vehicle.code, quarter);
-                    totalGap += gap;
+                    // 只累加正值缺口（负值表示过达，不需要返利）
+                    totalGap += Math.max(0, gap);
                 });
             });
 
