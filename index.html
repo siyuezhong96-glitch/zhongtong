@@ -558,7 +558,8 @@
             { code: 'X04', name: 'X04', icon: '🚙' },
             { code: 'W01', name: 'W01', icon: '🚐' },
             { code: 'W02', name: 'W02', icon: '🚙' },
-            { code: 'W04', name: 'W04', icon: '🚙' }
+            { code: 'W04', name: 'W04', icon: '🚙' },
+            { code: 'W05', name: 'W05', icon: '🚙' }
         ];
 
         const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
@@ -581,32 +582,58 @@
         // ===== 模块1: 指标缺口表格 =====
         function generateGapTable() {
             const table = document.getElementById('gapTable');
-            let html = '<thead><tr><th style="width: 120px;">车型</th>';
+            let html = '<thead><tr><th style="width: 120px;">车型</th><th style="width: 250px;">指标类型</th>';
 
-            // 表头：季度列 - 缩小宽度
+            // 表头：季度列
             quarters.forEach(q => {
                 html += `<th style="width: 150px;">2026 ${q}</th>`;
             });
             html += '<th style="width: 180px;">合计</th></tr></thead><tbody>';
 
-            // 数据行：每个车型一行
+            // 数据行：每个车型三行（量纲、总指标、缺口）
             vehicles.forEach(vehicle => {
-                html += `<tr><td class="vehicle-label">${vehicle.icon} ${vehicle.name}</td>`;
+                // 第一行：量纲
+                html += `<tr><td class="vehicle-label" rowspan="3" style="vertical-align: middle;">${vehicle.icon} ${vehicle.name}</td>
+                    <td style="background: #fff9f0; font-weight: 600; color: #ff69b4;">量纲</td>`;
                 quarters.forEach(q => {
                     html += `<td>
-                        <input type="text"
+                        <input type="number"
                                data-vehicle="${vehicle.code}"
                                data-quarter="${q}"
-                               placeholder="0.00"
-                               style="text-align: right;">
+                               data-type="dimension"
+                               placeholder="0"
+                               style="text-align: right;"
+                               step="1">
                     </td>`;
                 });
-                html += `<td class="total-cell" id="${vehicle.code}-total">¥0.00</td></tr>`;
+                html += `<td class="total-cell" id="${vehicle.code}-dimension-total">0</td></tr>`;
+
+                // 第二行：总指标
+                html += `<tr><td style="background: #f0f8ff; font-weight: 600; color: #ff69b4;">总指标（供应链-采购指标）<br>KPI口径缺口-合计（-过达/+缺口）</td>`;
+                quarters.forEach(q => {
+                    html += `<td>
+                        <input type="number"
+                               data-vehicle="${vehicle.code}"
+                               data-quarter="${q}"
+                               data-type="indicator"
+                               placeholder="0.00"
+                               style="text-align: right;"
+                               step="0.01">
+                    </td>`;
+                });
+                html += `<td class="total-cell" id="${vehicle.code}-indicator-total">¥0.00</td></tr>`;
+
+                // 第三行：缺口（自动计算）
+                html += `<tr><td style="background: #ffe4f0; font-weight: 600; color: #ff1493;">缺口（自动计算）</td>`;
+                quarters.forEach(q => {
+                    html += `<td class="total-cell" id="${vehicle.code}-${q}-gap" style="background: #fff5f8; font-weight: 600; color: #ff1493;">¥0.00</td>`;
+                });
+                html += `<td class="total-cell" id="${vehicle.code}-gap-total" style="background: #ffe4f0; font-weight: 700; color: #ff1493;">¥0.00</td></tr>`;
             });
 
             // 汇总行
             html += `<tr style="background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%); font-weight: 700;">
-                <td class="vehicle-label" style="font-size: 1.1em;">📊 汇总</td>`;
+                <td class="vehicle-label" style="font-size: 1.1em;" colspan="2">📊 总缺口汇总</td>`;
             quarters.forEach(q => {
                 html += `<td class="total-cell" id="summary-${q}" style="font-size: 1.05em;">¥0.00</td>`;
             });
@@ -617,61 +644,78 @@
 
             // 添加事件监听
             document.querySelectorAll('#gapTable input').forEach(input => {
-                // 获取焦点时去除千分符，便于编辑
-                input.addEventListener('focus', function() {
-                    if (this.value) {
-                        // 去除千分符
-                        this.value = this.value.replace(/,/g, '');
-                    }
-                });
-
                 input.addEventListener('input', function() {
-                    // 保存时去除千分符
-                    const rawValue = this.value.replace(/,/g, '');
-                    saveGapData(this.dataset.vehicle, this.dataset.quarter, rawValue);
-                    updateVehicleTotal(this.dataset.vehicle);
+                    const vehicle = this.dataset.vehicle;
+                    const quarter = this.dataset.quarter;
+                    const type = this.dataset.type;
+                    const value = this.value;
+
+                    // 保存数据
+                    saveGapData(vehicle, quarter, type, value);
+
+                    // 计算缺口
+                    calculateGap(vehicle, quarter);
+
+                    // 更新汇总
+                    updateVehicleGapTotal(vehicle);
                     updateGapSummaryRow();
                     updateSummary();
-                });
-
-                // 失去焦点时格式化为千分符+两位小数
-                input.addEventListener('blur', function() {
-                    if (this.value) {
-                        const num = parseFloat(this.value.replace(/,/g, ''));
-                        if (!isNaN(num)) {
-                            this.value = num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                        }
-                    }
                 });
             });
         }
 
         // 保存指标缺口数据
-        function saveGapData(vehicle, quarter, value) {
-            const key = `gap_${vehicle}_${quarter}`;
+        function saveGapData(vehicle, quarter, type, value) {
+            const key = `gap_${vehicle}_${quarter}_${type}`;
             localStorage.setItem(key, value);
+        }
+
+        // 计算缺口（量纲 × 总指标）
+        function calculateGap(vehicle, quarter) {
+            const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle}"][data-quarter="${quarter}"][data-type="dimension"]`);
+            const indicatorInput = document.querySelector(`#gapTable [data-vehicle="${vehicle}"][data-quarter="${quarter}"][data-type="indicator"]`);
+
+            const dimension = dimensionInput && dimensionInput.value ? parseFloat(dimensionInput.value) : 0;
+            const indicator = indicatorInput && indicatorInput.value ? parseFloat(indicatorInput.value) : 0;
+
+            const gap = dimension * indicator;
+
+            const gapCell = document.getElementById(`${vehicle}-${quarter}-gap`);
+            if (gapCell) {
+                gapCell.textContent = `¥${formatCurrency(gap)}`;
+            }
+
+            return gap;
         }
 
         // 加载指标缺口数据
         function loadGapData() {
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const key = `gap_${vehicle.code}_${quarter}`;
-                    const value = localStorage.getItem(key);
-                    if (value) {
-                        const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    // 加载量纲
+                    const dimensionKey = `gap_${vehicle.code}_${quarter}_dimension`;
+                    const dimensionValue = localStorage.getItem(dimensionKey);
+                    if (dimensionValue) {
+                        const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="dimension"]`);
                         if (input) {
-                            // 格式化为千分符和两位小数显示
-                            const numValue = parseFloat(value);
-                            if (!isNaN(numValue)) {
-                                input.value = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                            } else {
-                                input.value = value;
-                            }
+                            input.value = dimensionValue;
                         }
                     }
+
+                    // 加载总指标
+                    const indicatorKey = `gap_${vehicle.code}_${quarter}_indicator`;
+                    const indicatorValue = localStorage.getItem(indicatorKey);
+                    if (indicatorValue) {
+                        const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="indicator"]`);
+                        if (input) {
+                            input.value = indicatorValue;
+                        }
+                    }
+
+                    // 计算缺口
+                    calculateGap(vehicle.code, quarter);
                 });
-                updateVehicleTotal(vehicle.code);
+                updateVehicleGapTotal(vehicle.code);
             });
             updateGapSummaryRow();
         }
@@ -685,20 +729,26 @@
             // 清除localStorage中的缺口数据
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const key = `gap_${vehicle.code}_${quarter}`;
-                    localStorage.removeItem(key);
+                    const dimensionKey = `gap_${vehicle.code}_${quarter}_dimension`;
+                    const indicatorKey = `gap_${vehicle.code}_${quarter}_indicator`;
+                    localStorage.removeItem(dimensionKey);
+                    localStorage.removeItem(indicatorKey);
                 });
             });
 
             // 清空所有输入框
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    if (input) {
-                        input.value = '0.00';
-                    }
+                    const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                    const indicatorInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="indicator"]`);
+                    if (dimensionInput) dimensionInput.value = '';
+                    if (indicatorInput) indicatorInput.value = '';
+
+                    // 清空缺口显示
+                    const gapCell = document.getElementById(`${vehicle.code}-${quarter}-gap`);
+                    if (gapCell) gapCell.textContent = '¥0.00';
                 });
-                updateVehicleTotal(vehicle.code);
+                updateVehicleGapTotal(vehicle.code);
             });
 
             // 更新汇总行
@@ -710,19 +760,43 @@
             alert('所有缺口数据已清除！');
         }
 
-        // 更新单个车型合计
-        function updateVehicleTotal(vehicleCode) {
-            let total = 0;
+        // 更新单个车型的量纲、总指标、缺口合计
+        function updateVehicleGapTotal(vehicleCode) {
+            let dimensionTotal = 0;
+            let indicatorTotal = 0;
+            let gapTotal = 0;
+
             quarters.forEach(quarter => {
-                const input = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"]`);
-                if (input && input.value) {
-                    // 去除千分符后再解析
-                    total += parseFloat(input.value.replace(/,/g, ''));
+                const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                const indicatorInput = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"][data-type="indicator"]`);
+
+                if (dimensionInput && dimensionInput.value) {
+                    dimensionTotal += parseFloat(dimensionInput.value);
                 }
+                if (indicatorInput && indicatorInput.value) {
+                    indicatorTotal += parseFloat(indicatorInput.value);
+                }
+
+                const gap = calculateGap(vehicleCode, quarter);
+                gapTotal += gap;
             });
-            const totalElement = document.getElementById(`${vehicleCode}-total`);
-            if (totalElement) {
-                totalElement.textContent = `¥${formatCurrency(total)}`;
+
+            // 更新量纲合计
+            const dimensionTotalElement = document.getElementById(`${vehicleCode}-dimension-total`);
+            if (dimensionTotalElement) {
+                dimensionTotalElement.textContent = dimensionTotal.toFixed(0);
+            }
+
+            // 更新总指标合计
+            const indicatorTotalElement = document.getElementById(`${vehicleCode}-indicator-total`);
+            if (indicatorTotalElement) {
+                indicatorTotalElement.textContent = `¥${formatCurrency(indicatorTotal)}`;
+            }
+
+            // 更新缺口合计
+            const gapTotalElement = document.getElementById(`${vehicleCode}-gap-total`);
+            if (gapTotalElement) {
+                gapTotalElement.textContent = `¥${formatCurrency(gapTotal)}`;
             }
         }
 
@@ -730,15 +804,12 @@
         function updateGapSummaryRow() {
             let grandTotal = 0;
 
-            // 更新每个季度的汇总
+            // 更新每个季度的汇总（仅汇总缺口）
             quarters.forEach(quarter => {
                 let quarterTotal = 0;
                 vehicles.forEach(vehicle => {
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    if (input && input.value) {
-                        // 去除千分符后再解析
-                        quarterTotal += parseFloat(input.value.replace(/,/g, ''));
-                    }
+                    const gap = calculateGap(vehicle.code, quarter);
+                    quarterTotal += gap;
                 });
                 grandTotal += quarterTotal;
 
@@ -757,14 +828,29 @@
 
         // 下载指标缺口模板
         function downloadGapTemplate() {
-            // 创建工作簿数据
-            const data = [['车型', '2026 Q1', '2026 Q2', '2026 Q3', '2026 Q4']];
+            // 创建表头
+            const data = [['车型', '指标类型', '2026 Q1', '2026 Q2', '2026 Q3', '2026 Q4']];
+
+            // 每个车型两行：量纲行和总指标行
             vehicles.forEach(vehicle => {
-                data.push([vehicle.name, 0, 0, 0, 0]);
+                // 量纲行
+                data.push([vehicle.name, '量纲', 0, 0, 0, 0]);
+                // 总指标行
+                data.push([vehicle.name, '总指标（供应链-采购指标）KPI口径缺口-合计（-过达/+缺口）', 0, 0, 0, 0]);
             });
 
             // 创建工作表
             const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // 设置列宽
+            ws['!cols'] = [
+                { wch: 10 },  // 车型
+                { wch: 60 },  // 指标类型
+                { wch: 15 },  // Q1
+                { wch: 15 },  // Q2
+                { wch: 15 },  // Q3
+                { wch: 15 }   // Q4
+            ];
 
             // 创建工作簿
             const wb = XLSX.utils.book_new();
@@ -836,7 +922,7 @@
             // 跳过表头（第一行）
             let startIndex = 0;
             const firstRow = jsonData[0];
-            if (firstRow && (firstRow[0] === '车型' || String(firstRow[1]).includes('Q1'))) {
+            if (firstRow && (firstRow[0] === '车型' || String(firstRow[1]).includes('指标类型'))) {
                 startIndex = 1;
                 console.log('检测到表头，从第2行开始:', firstRow);
             }
@@ -846,47 +932,59 @@
 
             for (let i = startIndex; i < jsonData.length; i++) {
                 const row = jsonData[i];
-                if (!row || row.length === 0) continue;
+                if (!row || row.length < 3) continue;
 
                 const vehicleCode = String(row[0] || '').trim();
-                if (!vehicleCode) continue;
+                const indicatorType = String(row[1] || '').trim();
 
-                console.log(`处理第${i+1}行: 车型=${vehicleCode}, 数据=`, row);
+                if (!vehicleCode || !indicatorType) continue;
+
+                console.log(`处理第${i+1}行: 车型=${vehicleCode}, 指标类型=${indicatorType}, 数据=`, row);
 
                 const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
 
                 if (!vehicle) {
                     console.error(`车型不匹配: ${vehicleCode}`);
-                    errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04）`);
+                    errorLines.push(`第${i+1}行：车型"${vehicleCode}"不存在（有效车型：X01,X02,X03,X04,W01,W02,W04,W05）`);
                     continue;
                 }
 
-                console.log(`找到车型: code=${vehicle.code}, name=${vehicle.name}`);
+                // 判断是量纲还是总指标
+                let dataType = '';
+                if (indicatorType.includes('量纲') || indicatorType === '量纲') {
+                    dataType = 'dimension';
+                } else if (indicatorType.includes('总指标') || indicatorType.includes('KPI口径') || indicatorType.includes('缺口')) {
+                    dataType = 'indicator';
+                } else {
+                    errorLines.push(`第${i+1}行：无法识别指标类型"${indicatorType}"（应为"量纲"或"总指标..."）`);
+                    continue;
+                }
+
+                console.log(`找到车型: code=${vehicle.code}, name=${vehicle.name}, 数据类型=${dataType}`);
 
                 // 导入4个季度的数据
                 quarters.forEach((quarter, idx) => {
-                    const value = row[idx + 1];
-                    const selector = `#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`;
+                    const value = row[idx + 2]; // 从第3列开始（索引2）
+                    const selector = `#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="${dataType}"]`;
                     const input = document.querySelector(selector);
 
                     console.log(`  ${quarter}: 值=${value}, 选择器=${selector}, 找到输入框=${!!input}`);
 
                     if (input) {
                         if (value === undefined || value === '' || value === null) {
-                            input.value = '0.00';
-                            saveGapData(vehicle.code, quarter, '0.00');
-                            console.log(`    设置为0.00`);
+                            input.value = '';
+                            saveGapData(vehicle.code, quarter, dataType, '');
+                            console.log(`    设置为空`);
                         } else {
                             const numValue = parseFloat(value);
                             if (!isNaN(numValue)) {
-                                const formattedValue = numValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-                                input.value = formattedValue;
-                                saveGapData(vehicle.code, quarter, numValue);
-                                console.log(`    设置为${formattedValue}, 保存=${numValue}`);
+                                input.value = numValue;
+                                saveGapData(vehicle.code, quarter, dataType, numValue);
+                                console.log(`    设置为${numValue}`);
                             } else {
-                                input.value = '0.00';
-                                saveGapData(vehicle.code, quarter, '0.00');
-                                console.log(`    无效值，设置为0.00`);
+                                input.value = '';
+                                saveGapData(vehicle.code, quarter, dataType, '');
+                                console.log(`    无效值，设置为空`);
                             }
                         }
                     } else {
@@ -894,16 +992,21 @@
                     }
                 });
 
-                updateVehicleTotal(vehicle.code);
+                // 计算缺口
+                quarters.forEach(quarter => {
+                    calculateGap(vehicle.code, quarter);
+                });
+
+                updateVehicleGapTotal(vehicle.code);
                 importCount++;
             }
 
-            console.log(`==== 导入完成: ${importCount}个车型 ====`);
+            console.log(`==== 导入完成: ${importCount}行数据 ====`);
 
             updateGapSummaryRow();
             updateSummary();
 
-            let message = `成功导入 ${importCount} 个车型的缺口数据！`;
+            let message = `成功导入 ${importCount} 行数据！`;
             if (errorLines.length > 0 && errorLines.length < 10) {
                 message += '\n\n跳过的行：\n' + errorLines.join('\n');
             } else if (errorLines.length >= 10) {
@@ -1373,8 +1476,8 @@
             vehicles.forEach(vehicle => {
                 remainingGaps[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    const gapAmount = input && input.value ? parseFloat(input.value.replace(/,/g, '')) : 0;
+                    // 使用计算后的缺口值
+                    const gapAmount = calculateGap(vehicle.code, quarter);
                     remainingGaps[vehicle.code][quarter] = gapAmount;
                 });
             });
@@ -1384,8 +1487,8 @@
             vehicles.forEach(vehicle => {
                 allocationResults[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    const gapAmount = input && input.value ? parseFloat(input.value.replace(/,/g, '')) : 0;
+                    // 使用计算后的缺口值
+                    const gapAmount = calculateGap(vehicle.code, quarter);
                     allocationResults[vehicle.code][quarter] = {
                         original: gapAmount,
                         allocated: 0,
@@ -1591,15 +1694,12 @@
 
         // ===== 统计汇总 =====
         function updateSummary() {
-            // 计算总指标缺口
+            // 计算总指标缺口（使用计算后的缺口值）
             let totalGap = 0;
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const input = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
-                    if (input && input.value) {
-                        // 去除千分符后再解析
-                        totalGap += parseFloat(input.value.replace(/,/g, ''));
-                    }
+                    const gap = calculateGap(vehicle.code, quarter);
+                    totalGap += gap;
                 });
             });
 
