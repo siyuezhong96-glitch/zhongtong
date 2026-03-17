@@ -579,6 +579,13 @@
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
                     <li><strong>使用最终缺口</strong>：分配基于"最终缺口汇总"（当前指标缺口 + 机会点），而非仅当前指标缺口</li>
+                    <li><strong>🔄 车型映射</strong>：系统自动识别25款和26款车型
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            <li>返利记录填写26款车型（X11, X13, X04C, W10, W02B, W04B）会自动映射到25款</li>
+                            <li>例如：X13 → X03, X11 → X01, W04B → W04</li>
+                            <li>分配日志会显示原始车型和映射后车型</li>
+                        </ul>
+                    </li>
                     <li><strong>🔴 紧急落地标识</strong>：在"紧急落地标识"列标记为"*"的返利会优先分配
                         <ul style="margin-top: 5px; padding-left: 20px;">
                             <li>紧急返利可以分配到任何车型，包括已过达（负缺口）的车型</li>
@@ -633,6 +640,25 @@
             { code: 'W04', name: 'W04', icon: '🚙' },
             { code: 'W05', name: 'W05', icon: '🚙' }
         ];
+
+        // 车型映射表：26款 -> 25款（用于返利记录中的车型映射）
+        const vehicleMapping = {
+            'X11': 'X01',  // 26款X11 对应 25款X01
+            'X13': 'X03',  // 26款X13 对应 25款X03
+            'X04C': 'X04', // 26款X04C 对应 25款X04
+            'W10': 'W01',  // 26款W10 对应 25款W01
+            'W02B': 'W02', // 26款W02B 对应 25款W02
+            'W04B': 'W04'  // 26款W04B 对应 25款W04
+            // W05 新车型，无需映射
+        };
+
+        // 车型映射函数：将26款车型代码转换为25款（用于缺口匹配）
+        function mapVehicleCode(vehicleCode) {
+            // 去除空格并转大写
+            const code = vehicleCode.trim().toUpperCase();
+            // 如果在映射表中，返回映射后的25款车型；否则返回原车型
+            return vehicleMapping[code] || code;
+        }
 
         const quarters = ['Q1', 'Q2', 'Q3', 'Q4'];
 
@@ -2042,10 +2068,10 @@
                     return;
                 }
 
-                // 解析可分配车型（用逗号分隔）
+                // 解析可分配车型（用逗号分隔），并映射26款到25款
                 const rebateVehicles = rebate.vehicles
                     .split(',')
-                    .map(v => v.trim())
+                    .map(v => mapVehicleCode(v.trim())) // 应用车型映射
                     .filter(v => v);
 
                 if (rebateVehicles.length === 0) {
@@ -2056,8 +2082,17 @@
                     return;
                 }
 
+                // 显示原始车型和映射后车型（如果有映射）
+                const originalVehicles = rebate.vehicles.split(',').map(v => v.trim()).filter(v => v);
+                const hasMapped = originalVehicles.some(v => mapVehicleCode(v) !== v);
+
                 processLogs.push(`\n返利 #${rebateIdx + 1}: ${rebate.supplier || '未知供应商'} - ¥${formatCurrency(rebateAmount)}`);
-                processLogs.push(`  可分配车型: ${rebateVehicles.join(', ')}`);
+                if (hasMapped) {
+                    processLogs.push(`  原始车型: ${originalVehicles.join(', ')}`);
+                    processLogs.push(`  映射后车型: ${rebateVehicles.join(', ')} (26款→25款)`);
+                } else {
+                    processLogs.push(`  可分配车型: ${rebateVehicles.join(', ')}`);
+                }
 
                 // 解析签署时间范围
                 const startQ = parseQuarter(rebate.earliestSignQuarter);
