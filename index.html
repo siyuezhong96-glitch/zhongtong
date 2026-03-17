@@ -582,8 +582,8 @@
                     <li><strong>🔴 紧急落地标识</strong>：在"紧急落地标识"列标记为"*"的返利会优先分配
                         <ul style="margin-top: 5px; padding-left: 20px;">
                             <li>紧急返利可以分配到任何车型，包括已过达（负缺口）的车型</li>
-                            <li>选择原则：分配给单车金额最大的车型，以保证各车型过达趋势一致</li>
-                            <li>单车金额 = 最终缺口 ÷ 量纲</li>
+                            <li>选择原则：分配给<strong>总缺口最大</strong>的车型</li>
+                            <li>总缺口 = 量纲 × (当前指标 + 机会点)</li>
                         </ul>
                     </li>
                     <li>普通返利：缺口为负值表示指标已过达，不分配返利，系统将自动忽略</li>
@@ -2081,13 +2081,13 @@
                 let allocated = false;
 
                 if (rebate.isUrgent) {
-                    // 紧急返利：可以分配到任何车型（包括过达的），选择单车金额最大的车型
+                    // 紧急返利：可以分配到任何车型（包括过达的），选择总缺口最大的车型
                     processLogs.push(`  ⚠️ 紧急落地返利，使用特殊分配策略`);
 
                     for (const quarter of applicableQuarters) {
                         if (allocated) break;
 
-                        // 获取所有候选车型的单车金额（最终缺口/量纲）
+                        // 获取所有候选车型的最终缺口
                         const candidateVehicles = [];
                         rebateVehicles.forEach(vehicleCode => {
                             // 获取该车型该季度的量纲
@@ -2108,8 +2108,8 @@
 
                         if (candidateVehicles.length === 0) continue;
 
-                        // 选择单车金额最大的车型（最不过达的，或最缺的）
-                        candidateVehicles.sort((a, b) => b.perUnitAmount - a.perUnitAmount);
+                        // 选择总缺口最大的车型
+                        candidateVehicles.sort((a, b) => b.finalGap - a.finalGap);
                         const selectedVehicle = candidateVehicles[0];
 
                         // 分配给选中的车型
@@ -2123,7 +2123,7 @@
                         // 更新剩余缺口（允许变为负值，表示过达）
                         remainingGaps[selectedVehicle.code][quarter] = Math.max(0, remainingGaps[selectedVehicle.code][quarter] - rebateAmount);
 
-                        processLogs.push(`  ✓ 紧急分配: ${selectedVehicle.code} - ${quarter} (单车金额: ¥${formatCurrency(selectedVehicle.perUnitAmount)}, 最终缺口: ¥${formatCurrency(selectedVehicle.finalGap)})`);
+                        processLogs.push(`  ✓ 紧急分配: ${selectedVehicle.code} - ${quarter} (总缺口: ¥${formatCurrency(selectedVehicle.finalGap)}, 单车金额: ¥${formatCurrency(selectedVehicle.perUnitAmount)})`);
 
                         // 更新原始记录的推荐落地车型和时间
                         if (originalRebate) {

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 启动指南 - 飞书表格导入</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            max-width: 800px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .step {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-left: 5px solid #667eea;
+        }
+
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .step-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .step-content {
+            color: #555;
+            font-size: 1.1em;
+            line-height: 1.8;
+            margin-left: 55px;
+        }
+
+        .file-path {
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Consolas', monospace;
+            color: #667eea;
+            font-weight: bold;
+            overflow-x: auto;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 1.2em;
+            margin: 10px 5px;
+            cursor: pointer;
+            border: none;
+            transition: transform 0.2s;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .center {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+            color: #e83e8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 飞书表格导入 - 启动指南</h1>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">1</span>
+                启动服务器
+            </div>
+            <div class="step-content">
+                <p>在文件夹中找到并<strong>双击运行</strong>：</p>
+                <div class="file-path">
+                    📁 C:\Users\zhongtong\Desktop\zhongtong\启动飞书解析服务.bat
+                </div>
+                <div class="success">
+                    ✅ 看到服务器启动界面，显示 "地址: http://localhost:3000" 就成功了！
+                </div>
+                <div class="warning">
+                    ⚠️ <strong>保持这个黑色窗口打开！</strong>不要关闭它！
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">2</span>
+                打开主网页
+            </div>
+            <div class="step-content">
+                <p>在文件夹中找到并<strong>双击打开</strong>：</p>
+                <div class="file-path">
+                    📄 C:\Users\zhongtong\Desktop\zhongtong\index.html
+                </div>
+                <p style="margin-top: 10px;">浏览器会自动打开返利调配管理系统网页。</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-title">
+                <span class="step-number">3</span>
+                测试导入功能
+            </div>
+            <div class="step-content">
+                <p>在打开的网页中：</p>
+                <ol style="margin-left: 20px; line-height: 2;">
+                    <li>找到<strong>"当前指标缺口"</strong>区域</li>
+                    <li>看到<strong>"📋 从飞书表格导入"</strong>紫色输入框</li>
+                    <li>输入测试链接：<code>https://test.feishu.cn/table/123</code></li>
+                    <li>点击<strong>"🚀 导入飞书表格"</strong>按钮</li>
+                    <li>等待1-2秒，看到成功提示！</li>
+                </ol>
+                <div class="success">
+                    ✅ 表格会自动填充模拟数据（8个车型，4个季度）
+                </div>
+            </div>
+        </div>
+
+        <div class="center">
+            <button class="button" onclick="window.open('C:\\Users\\zhongtong\\Desktop\\zhongtong', '_blank')">
+                📁 打开项目文件夹
+            </button>
+            <button class="button" onclick="window.location.href='index.html'">
+                🌐 前往主网页
+            </button>
+        </div>
+
+        <div style="margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <h3 style="color: #667eea; margin-bottom: 15px;">💡 常见问题</h3>
+            <p style="color: #555; line-height: 1.8;">
+                <strong>Q: 双击 .bat 文件闪退？</strong><br>
+                A: 需要安装 Python。下载地址：<a href="https://www.python.org/downloads/" target="_blank">https://www.python.org/downloads/</a>
+            </p>
+            <p style="color: #555; line-height: 1.8; margin-top: 15px;">
+                <strong>Q: 点导入按钮没反应？</strong><br>
+                A: 确认步骤1的黑色窗口还开着，服务器正在运行。
+            </p>
+            <p style="color: #555; line-height: 1.8; margin-top: 15px;">
+                <strong>Q: 显示"无法连接到服务器"？</strong><br>
+                A: 重新运行步骤1启动服务器，然后刷新网页。
+            </p>
+        </div>
+    </div>
+</body>
+</html>
