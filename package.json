@@ -1,0 +1,17 @@
+{
+  "name": "zhongtong-feishu-parser",
+  "version": "1.0.0",
+  "description": "返利调配管理系统 - 飞书表格解析服务",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python feishu-parser.py"
+  },
+  "keywords": [
+    "feishu",
+    "parser",
+    "rebate",
+    "management"
+  ],
+  "author": "",
+  "license": "MIT"
+}

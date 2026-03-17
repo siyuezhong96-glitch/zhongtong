@@ -1751,9 +1751,103 @@
                 return;
             }
 
-            // 创建友好的提示弹窗
-            const modal = createFeishuModal(feishuUrl);
-            document.body.appendChild(modal);
+            // 尝试自动解析
+            await tryAutoParseFeishu(feishuUrl);
+        }
+
+        // 尝试自动解析飞书表格
+        async function tryAutoParseFeishu(feishuUrl) {
+            // 显示加载提示
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'loadingMsg';
+            loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 9999; text-align: center;';
+            loadingMsg.innerHTML = '<div style="color: #ff1493; font-size: 1.2em; margin-bottom: 10px;">🔄 正在解析飞书表格...</div><div style="color: #ff69b4; font-size: 0.9em;">请稍候，这可能需要几秒钟</div>';
+            document.body.appendChild(loadingMsg);
+
+            try {
+                // 检测API端点（优先使用云端，备用本地）
+                const apiEndpoint = await detectApiEndpoint();
+
+                if (!apiEndpoint) {
+                    throw new Error('NO_API');
+                }
+
+                console.log('使用API端点:', apiEndpoint);
+
+                // 调用飞书解析API
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: feishuUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API请求失败：' + response.statusText);
+                }
+
+                const data = await response.json();
+
+                if (!data.success || !data.tableData) {
+                    throw new Error('数据格式错误');
+                }
+
+                // 处理返回的数据
+                processGapData(data.tableData);
+
+                // 清空输入框
+                document.getElementById('feishuGapUrl').value = '';
+
+                // 移除加载提示
+                loadingMsg.remove();
+
+                alert('✅ 飞书表格导入成功！');
+
+            } catch (error) {
+                console.error('飞书导入错误:', error);
+
+                // 移除加载提示
+                const msg = document.getElementById('loadingMsg');
+                if (msg) msg.remove();
+
+                // 如果是无法连接API，显示手动导入说明
+                if (error.message === 'NO_API' || error.message.includes('Failed to fetch')) {
+                    const modal = createFeishuModal(feishuUrl);
+                    document.body.appendChild(modal);
+                } else {
+                    alert(`❌ 解析失败：${error.message}\n\n请使用手动导出方式。`);
+                }
+            }
+        }
+
+        // 检测可用的API端点
+        async function detectApiEndpoint() {
+            // API端点优先级列表
+            const endpoints = [
+                '/api/parse-feishu',  // Vercel部署的API
+                'http://localhost:3000/parse-feishu'  // 本地服务器
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    // 快速测试连接
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+                    await fetch(endpoint, {
+                        method: 'OPTIONS',
+                        signal: controller.signal
+                    });
+
+                    clearTimeout(timeoutId);
+                    return endpoint;
+                } catch (e) {
+                    continue;
+                }
+            }
+
+            return null;
         }
 
         // 创建飞书导入提示弹窗
