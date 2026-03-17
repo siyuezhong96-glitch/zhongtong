@@ -1751,45 +1751,75 @@
                 return;
             }
 
-            // 显示加载提示
-            const loadingMsg = document.createElement('div');
-            loadingMsg.id = 'loadingMsg';
-            loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 9999; text-align: center;';
-            loadingMsg.innerHTML = '<div style="color: #ff1493; font-size: 1.2em; margin-bottom: 10px;">🔄 正在解析飞书表格...</div><div style="color: #ff69b4; font-size: 0.9em;">请稍候，这可能需要几秒钟</div>';
-            document.body.appendChild(loadingMsg);
+            // 创建友好的提示弹窗
+            const modal = createFeishuModal(feishuUrl);
+            document.body.appendChild(modal);
+        }
 
-            try {
-                // 调用飞书解析API（本地服务器）
-                const response = await fetch('http://localhost:3000/parse-feishu', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url: feishuUrl })
-                });
+        // 创建飞书导入提示弹窗
+        function createFeishuModal(feishuUrl) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; justify-content: center;';
 
-                if (!response.ok) {
-                    throw new Error('飞书表格解析失败：' + response.statusText);
+            modal.innerHTML = `
+                <div style="background: white; padding: 40px; border-radius: 16px; max-width: 600px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <h2 style="color: #ff1493; margin-bottom: 20px; font-size: 1.5em; text-align: center;">📋 飞书表格导入说明</h2>
+
+                    <div style="background: #fff5f8; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ff69b4;">
+                        <p style="color: #ff1493; font-size: 1.05em; line-height: 1.8; margin: 0;">
+                            <strong>提示：</strong>在线版本暂不支持直接解析飞书表格。<br>
+                            请使用以下方式导入数据：
+                        </p>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                        <h3 style="color: #ff69b4; margin-bottom: 15px; font-size: 1.1em;">📥 导入步骤：</h3>
+                        <ol style="color: #333; line-height: 2; margin-left: 20px;">
+                            <li>在飞书表格中，点击右上角 <strong>"···"</strong> 菜单</li>
+                            <li>选择 <strong>"导出"</strong> → <strong>"Excel格式"</strong></li>
+                            <li>下载导出的 Excel 文件</li>
+                            <li>使用上方 <strong>"📤 导入缺口数据"</strong> 按钮上传文件</li>
+                        </ol>
+                    </div>
+
+                    <div style="background: #e7f3ff; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                        <p style="color: #0066cc; font-size: 0.95em; line-height: 1.6; margin: 0;">
+                            💡 <strong>需要自动解析？</strong><br>
+                            可以下载本地版本使用完整功能：<br>
+                            <a href="https://github.com/siyuezhong96-glitch/zhongtong" target="_blank" style="color: #0066cc; text-decoration: underline;">
+                                https://github.com/siyuezhong96-glitch/zhongtong
+                            </a>
+                        </p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="copyFeishuUrl('${feishuUrl}')" style="padding: 12px 24px; background: linear-gradient(135deg, #52c41a 0%, #389e0d 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                            📋 复制链接
+                        </button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="padding: 12px 24px; background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                            我知道了
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
                 }
+            });
 
-                const data = await response.json();
+            return modal;
+        }
 
-                // 处理返回的数据（假设返回的是Excel格式的数组）
-                processGapData(data.tableData);
-
-                // 清空输入框
-                urlInput.value = '';
-
-                alert('✅ 飞书表格导入成功！');
-
-            } catch (error) {
-                console.error('飞书导入错误:', error);
-                alert(`❌ 飞书表格导入失败：${error.message}\n\n替代方案：\n1. 在飞书表格中点击右上角"..."菜单\n2. 选择"导出" → "Excel格式"\n3. 使用上方"导入缺口数据"按钮上传导出的Excel文件`);
-            } finally {
-                // 移除加载提示
-                const msg = document.getElementById('loadingMsg');
-                if (msg) msg.remove();
-            }
+        // 复制飞书链接到剪贴板
+        function copyFeishuUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ 飞书链接已复制到剪贴板！\n\n您可以在飞书中打开此链接进行导出操作。');
+            }).catch(() => {
+                alert('❌ 复制失败，请手动复制链接');
+            });
         }
 
         // 备用方案：通过飞书API直接获取表格数据（需要配置）
