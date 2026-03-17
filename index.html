@@ -437,6 +437,14 @@
                 <button class="add-button" onclick="clearAllGapData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有缺口数据</button>
                 <input type="file" id="gapFileInput" accept=".xlsx,.xls" style="display:none;" onchange="importGapData(event)">
             </div>
+            <div style="margin-bottom: 15px; padding: 15px; background: #fff5f8; border-radius: 8px; border: 2px solid #ffc0cb;">
+                <label style="color: #ff1493; font-weight: 600; display: block; margin-bottom: 10px;">📋 从飞书表格导入</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="feishuGapUrl" placeholder="请粘贴飞书表格链接" style="flex: 1; padding: 10px; border: 2px solid #ffc0cb; border-radius: 8px; font-size: 0.95em;">
+                    <button class="add-button" onclick="importFromFeishu()" style="margin: 0; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">🚀 导入飞书表格</button>
+                </div>
+                <p style="color: #ff69b4; font-size: 0.85em; margin-top: 8px;">提示：支持飞书多维表格和飞书文档链接</p>
+            </div>
             <div class="table-wrapper">
                 <table class="data-table" id="gapTable">
                     <!-- 动态生成 -->
@@ -1725,6 +1733,70 @@
             document.getElementById('totalRebate').textContent = `¥${formatCurrency(totalRebate)}`;
             document.getElementById('remainingGap').textContent = `¥${formatCurrency(remaining)}`;
             document.getElementById('fillRate').textContent = `${fillRate}%`;
+        }
+
+        // ===== 飞书表格导入功能 =====
+        async function importFromFeishu() {
+            const urlInput = document.getElementById('feishuGapUrl');
+            const feishuUrl = urlInput.value.trim();
+
+            if (!feishuUrl) {
+                alert('请输入飞书表格链接！');
+                return;
+            }
+
+            // 验证飞书链接格式
+            if (!feishuUrl.includes('feishu') && !feishuUrl.includes('larksuite')) {
+                alert('请输入有效的飞书表格链接！');
+                return;
+            }
+
+            // 显示加载提示
+            const loadingMsg = document.createElement('div');
+            loadingMsg.id = 'loadingMsg';
+            loadingMsg.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); z-index: 9999; text-align: center;';
+            loadingMsg.innerHTML = '<div style="color: #ff1493; font-size: 1.2em; margin-bottom: 10px;">🔄 正在解析飞书表格...</div><div style="color: #ff69b4; font-size: 0.9em;">请稍候，这可能需要几秒钟</div>';
+            document.body.appendChild(loadingMsg);
+
+            try {
+                // 调用飞书解析API（本地服务器）
+                const response = await fetch('http://localhost:3000/parse-feishu', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: feishuUrl })
+                });
+
+                if (!response.ok) {
+                    throw new Error('飞书表格解析失败：' + response.statusText);
+                }
+
+                const data = await response.json();
+
+                // 处理返回的数据（假设返回的是Excel格式的数组）
+                processGapData(data.tableData);
+
+                // 清空输入框
+                urlInput.value = '';
+
+                alert('✅ 飞书表格导入成功！');
+
+            } catch (error) {
+                console.error('飞书导入错误:', error);
+                alert(`❌ 飞书表格导入失败：${error.message}\n\n替代方案：\n1. 在飞书表格中点击右上角"..."菜单\n2. 选择"导出" → "Excel格式"\n3. 使用上方"导入缺口数据"按钮上传导出的Excel文件`);
+            } finally {
+                // 移除加载提示
+                const msg = document.getElementById('loadingMsg');
+                if (msg) msg.remove();
+            }
+        }
+
+        // 备用方案：通过飞书API直接获取表格数据（需要配置）
+        async function importFromFeishuDirect(feishuUrl) {
+            // 这里可以添加直接调用飞书API的逻辑
+            // 需要飞书应用的app_id和app_secret
+            throw new Error('直接API调用功能待配置，请使用导出Excel的方式');
         }
 
         // 页面初始化
