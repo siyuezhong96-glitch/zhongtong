@@ -534,6 +534,7 @@
                             <th style="width: 120px;">采购-二级部门*</th>
                             <th style="width: 130px;">推荐落地车型</th>
                             <th style="width: 130px;">推荐落地时间</th>
+                            <th style="width: 100px;">紧急落地标识</th>
                             <th style="width: 70px;">操作</th>
                         </tr>
                     </thead>
@@ -578,7 +579,14 @@
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
                     <li><strong>使用最终缺口</strong>：分配基于"最终缺口汇总"（当前指标缺口 + 机会点），而非仅当前指标缺口</li>
-                    <li>缺口为负值表示指标已过达，不需要分配返利，系统将自动忽略</li>
+                    <li><strong>🔴 紧急落地标识</strong>：在"紧急落地标识"列标记为"*"的返利会优先分配
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            <li>紧急返利可以分配到任何车型，包括已过达（负缺口）的车型</li>
+                            <li>选择原则：分配给单车金额最大的车型，以保证各车型过达趋势一致</li>
+                            <li>单车金额 = 最终缺口 ÷ 量纲</li>
+                        </ul>
+                    </li>
+                    <li>普通返利：缺口为负值表示指标已过达，不分配返利，系统将自动忽略</li>
                     <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
                     <li>每笔返利完整分配给单一车型-季度，不拆分分配</li>
                     <li>季度优先级：Q1 > Q2 > Q3 > Q4，优先关闭早期缺口</li>
@@ -1507,6 +1515,7 @@
                 note: '',
                 calculationUnit: '',
                 amount: '',
+                urgentLanding: '', // 紧急落地标识
                 supplierCode: '',
                 department1: '',
                 department2: '',
@@ -1588,6 +1597,7 @@
                     <td><input type="text" value="${item.department2 || ''}" onchange="updateRebateField(${item.id}, 'department2', this.value)" required></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedVehicles || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
                     <td style="background: #f0f0f0;"><input type="text" value="${item.recommendedTime || ''}" readonly style="background: #f0f0f0; cursor: not-allowed;" placeholder="系统生成"></td>
+                    <td><input type="text" value="${item.urgentLanding || ''}" onchange="updateRebateField(${item.id}, 'urgentLanding', this.value)" placeholder="标*表示紧急" style="text-align: center;"></td>
                     <td><button class="delete-button" onclick="deleteRebateRow(${item.id})">删除</button></td>
                 </tr>`;
             });
@@ -1635,14 +1645,14 @@
         // 下载返利记录模板
         function downloadRebateTemplate() {
             // 创建表头（不包含系统生成的字段）
-            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '-', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*'];
+            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '-', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*', '紧急落地标识'];
 
             // 添加示例数据行
             const data = [
                 headers,
-                ['2026-01-15', '张三', '一般一次性返利', 1000, 'X01', '', '供应商A', 'X01,X02', '202601', '202603', '2026.Q1', '', '2026.Q2', '', '示例备注1', '', 100000, 'SUP001', '采购部', '采购一科'],
-                ['2026-02-20', '李四', '阶梯返利', 2000, 'X01,X02', '零件包A', '供应商B', 'X01,X02,X03', '202602', '202606', '2026.Q2', '', '2026.Q3', 'http://example.com/file.pdf', '示例备注2', '台', 200000, 'SUP002', '采购部', '采购二科'],
-                ['', '王五', '年度返利', '', '', 'SOR包B', '供应商C', 'X01,X02,X03,X04', '', '', '2026.Q1', '', '2026.Q4', '', '多车型示例', '件', 150000, 'SUP003', '采购部', '采购三科']
+                ['2026-01-15', '张三', '一般一次性返利', 1000, 'X01', '', '供应商A', 'X01,X02', '202601', '202603', '2026.Q1', '', '2026.Q2', '', '示例备注1', '', 100000, 'SUP001', '采购部', '采购一科', ''],
+                ['2026-02-20', '李四', '阶梯返利', 2000, 'X01,X02', '零件包A', '供应商B', 'X01,X02,X03', '202602', '202606', '2026.Q2', '', '2026.Q3', 'http://example.com/file.pdf', '示例备注2', '台', 200000, 'SUP002', '采购部', '采购二科', '*'],
+                ['', '王五', '年度返利', '', '', 'SOR包B', '供应商C', 'X01,X02,X03,X04', '', '', '2026.Q1', '', '2026.Q4', '', '多车型示例', '件', 150000, 'SUP003', '采购部', '采购三科', '']
             ];
 
             // 创建工作表
@@ -1663,8 +1673,8 @@
                 return;
             }
 
-            // 表头（包含所有21个字段+2个系统生成字段，现在变成22个字段+2个系统生成字段）
-            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '-', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*', '推荐落地车型', '推荐落地时间'];
+            // 表头（包含所有字段+2个系统生成字段）
+            const headers = ['提报日期', '采购经理*', '返利类型*', '返利单价', '单价返利车型', '零件/SOR包', '供应商名称*', '供应商供货车型*', '业务发生时间起点', '业务发生时间终点', '公函/协议最早签署时间*', '-', '公函/协议最迟签署时间*', '附件', '备注', '返利计算量纲', '返利金额*', '供应商编码*', '采购-一级部门*', '采购-二级部门*', '推荐落地车型', '推荐落地时间', '紧急落地标识'];
 
             // 准备数据
             const data = [headers];
@@ -1692,7 +1702,8 @@
                     item.department1 || '',
                     item.department2 || '',
                     item.recommendedVehicles || '',
-                    item.recommendedTime || ''
+                    item.recommendedTime || '',
+                    item.urgentLanding || ''
                 ]);
             });
 
@@ -1824,6 +1835,7 @@
                     supplierCode: row[17] ? String(row[17]) : '',
                     department1: row[18] ? String(row[18]) : '',
                     department2: row[19] ? String(row[19]) : '',
+                    urgentLanding: row[20] ? String(row[20]) : '', // 紧急落地标识
                     recommendedVehicles: '', // 系统生成，导入时留空
                     recommendedTime: '' // 系统生成，导入时留空
                 });
@@ -1972,23 +1984,28 @@
                 });
             });
 
-            // 3. 创建返利记录的排序副本（按提报日期排序，日期早的优先）
+            // 3. 创建返利记录的排序副本（紧急落地优先，然后按提报日期排序）
             const sortedRebates = [...rebateData].map((rebate, index) => {
                 // 如果提报日期为空，推断一个日期
                 const effectiveDate = rebate.submitDate || inferSubmitDate(index);
                 return {
                     ...rebate,
                     effectiveDate: effectiveDate,
-                    originalIndex: index
+                    originalIndex: index,
+                    isUrgent: rebate.urgentLanding === '*' // 标记是否紧急
                 };
             }).sort((a, b) => {
-                // 按提报日期升序排序（早的日期在前）
+                // 首先按紧急程度排序（紧急的在前）
+                if (a.isUrgent && !b.isUrgent) return -1;
+                if (!a.isUrgent && b.isUrgent) return 1;
+                // 然后按提报日期升序排序（早的日期在前）
                 return new Date(a.effectiveDate) - new Date(b.effectiveDate);
             });
 
-            processLogs.push('步骤2: 按提报日期排序返利记录（早的优先）');
+            processLogs.push('步骤2: 按优先级排序返利记录（紧急落地优先，然后按提报日期）');
             sortedRebates.forEach((r, idx) => {
-                processLogs.push(`  ${idx + 1}. ${r.supplier || '未知供应商'} - ¥${formatCurrency(r.amount)} (提报日期: ${r.effectiveDate})`);
+                const urgentMark = r.isUrgent ? '🔴紧急 ' : '';
+                processLogs.push(`  ${idx + 1}. ${urgentMark}${r.supplier || '未知供应商'} - ¥${formatCurrency(r.amount)} (提报日期: ${r.effectiveDate})`);
             });
             processLogs.push('');
 
@@ -2060,65 +2077,121 @@
 
                 processLogs.push(`  适用时间: ${applicableQuarters.join(', ')}`);
 
-                // 4. 按季度优先级（Q1>Q2>Q3>Q4）尝试分配
+                // 4. 根据是否紧急使用不同的分配策略
                 let allocated = false;
-                for (const quarter of applicableQuarters) {
-                    if (allocated) break;
 
-                    // 在当前季度内，找出所有可分配车型中有剩余缺口的车型
-                    const candidateVehicles = [];
-                    rebateVehicles.forEach(vehicleCode => {
-                        if (remainingGaps[vehicleCode] && remainingGaps[vehicleCode][quarter] > 0) {
-                            candidateVehicles.push({
-                                code: vehicleCode,
-                                gap: remainingGaps[vehicleCode][quarter]
+                if (rebate.isUrgent) {
+                    // 紧急返利：可以分配到任何车型（包括过达的），选择单车金额最大的车型
+                    processLogs.push(`  ⚠️ 紧急落地返利，使用特殊分配策略`);
+
+                    for (const quarter of applicableQuarters) {
+                        if (allocated) break;
+
+                        // 获取所有候选车型的单车金额（最终缺口/量纲）
+                        const candidateVehicles = [];
+                        rebateVehicles.forEach(vehicleCode => {
+                            // 获取该车型该季度的量纲
+                            const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicleCode}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                            const dimension = dimensionInput && dimensionInput.value ? parseFloat(dimensionInput.value) : 0;
+
+                            if (dimension > 0) {
+                                const finalGap = getFinalGap(vehicleCode, quarter);
+                                const perUnitAmount = finalGap / dimension; // 单车金额
+                                candidateVehicles.push({
+                                    code: vehicleCode,
+                                    dimension: dimension,
+                                    finalGap: finalGap,
+                                    perUnitAmount: perUnitAmount
+                                });
+                            }
+                        });
+
+                        if (candidateVehicles.length === 0) continue;
+
+                        // 选择单车金额最大的车型（最不过达的，或最缺的）
+                        candidateVehicles.sort((a, b) => b.perUnitAmount - a.perUnitAmount);
+                        const selectedVehicle = candidateVehicles[0];
+
+                        // 分配给选中的车型
+                        allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
+                        allocationResults[selectedVehicle.code][quarter].sources.push({
+                            rebateId: rebate.id,
+                            supplier: rebate.supplier || '未知',
+                            amount: rebateAmount
+                        });
+
+                        // 更新剩余缺口（允许变为负值，表示过达）
+                        remainingGaps[selectedVehicle.code][quarter] = Math.max(0, remainingGaps[selectedVehicle.code][quarter] - rebateAmount);
+
+                        processLogs.push(`  ✓ 紧急分配: ${selectedVehicle.code} - ${quarter} (单车金额: ¥${formatCurrency(selectedVehicle.perUnitAmount)}, 最终缺口: ¥${formatCurrency(selectedVehicle.finalGap)})`);
+
+                        // 更新原始记录的推荐落地车型和时间
+                        if (originalRebate) {
+                            originalRebate.recommendedVehicles = selectedVehicle.code;
+                            originalRebate.recommendedTime = `2026.${quarter}`;
+                        }
+                        allocated = true;
+                    }
+                } else {
+                    // 普通返利：按原有逻辑分配（只分配到有缺口的车型）
+                    for (const quarter of applicableQuarters) {
+                        if (allocated) break;
+
+                        // 在当前季度内，找出所有可分配车型中有剩余缺口的车型
+                        const candidateVehicles = [];
+                        rebateVehicles.forEach(vehicleCode => {
+                            if (remainingGaps[vehicleCode] && remainingGaps[vehicleCode][quarter] > 0) {
+                                candidateVehicles.push({
+                                    code: vehicleCode,
+                                    gap: remainingGaps[vehicleCode][quarter]
+                                });
+                            }
+                        });
+
+                        if (candidateVehicles.length === 0) continue;
+
+                        // 选择缺口最大的车型（均衡策略）
+                        candidateVehicles.sort((a, b) => b.gap - a.gap);
+                        const selectedVehicle = candidateVehicles[0];
+
+                        // 检查该缺口是否>=返利金额
+                        if (selectedVehicle.gap >= rebateAmount) {
+                            // 可以完整分配
+                            remainingGaps[selectedVehicle.code][quarter] -= rebateAmount;
+                            allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
+                            allocationResults[selectedVehicle.code][quarter].sources.push({
+                                rebateId: rebate.id,
+                                supplier: rebate.supplier || '未知',
+                                amount: rebateAmount
                             });
+
+                            processLogs.push(`  ✓ 成功分配: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} >= 返利: ¥${formatCurrency(rebateAmount)})`);
+
+                            // 更新原始记录的推荐落地车型和时间
+                            if (originalRebate) {
+                                originalRebate.recommendedVehicles = selectedVehicle.code;
+                                originalRebate.recommendedTime = `2026.${quarter}`;
+                            }
+                            allocated = true;
+                        } else if (selectedVehicle.gap > 0) {
+                            // 缺口不足，但仍然分配（部分填充）
+                            remainingGaps[selectedVehicle.code][quarter] = 0;
+                            allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
+                            allocationResults[selectedVehicle.code][quarter].sources.push({
+                                rebateId: rebate.id,
+                                supplier: rebate.supplier || '未知',
+                                amount: rebateAmount
+                            });
+
+                            processLogs.push(`  ⚠ 部分填充: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} < 返利: ¥${formatCurrency(rebateAmount)})`);
+
+                            // 更新原始记录的推荐落地车型和时间
+                            if (originalRebate) {
+                                originalRebate.recommendedVehicles = selectedVehicle.code;
+                                originalRebate.recommendedTime = `2026.${quarter}`;
+                            }
+                            allocated = true;
                         }
-                    });
-
-                    if (candidateVehicles.length === 0) continue;
-
-                    // 选择缺口最大的车型（均衡策略）
-                    candidateVehicles.sort((a, b) => b.gap - a.gap);
-                    const selectedVehicle = candidateVehicles[0];
-
-                    // 检查该缺口是否>=返利金额
-                    if (selectedVehicle.gap >= rebateAmount) {
-                        // 可以完整分配
-                        remainingGaps[selectedVehicle.code][quarter] -= rebateAmount;
-                        allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
-                        allocationResults[selectedVehicle.code][quarter].sources.push({
-                            rebateId: rebate.id,
-                            supplier: rebate.supplier || '未知',
-                            amount: rebateAmount
-                        });
-
-                        processLogs.push(`  ✓ 成功分配: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} >= 返利: ¥${formatCurrency(rebateAmount)})`);
-
-                        // 更新原始记录的推荐落地车型和时间
-                        if (originalRebate) {
-                            originalRebate.recommendedVehicles = selectedVehicle.code;
-                            originalRebate.recommendedTime = `2026.${quarter}`;
-                        }
-                        allocated = true;
-                    } else if (selectedVehicle.gap > 0) {
-                        // 缺口不足，但仍然分配（部分填充）
-                        remainingGaps[selectedVehicle.code][quarter] = 0;
-                        allocationResults[selectedVehicle.code][quarter].allocated += rebateAmount;
-                        allocationResults[selectedVehicle.code][quarter].sources.push({
-                            rebateId: rebate.id,
-                            supplier: rebate.supplier || '未知',
-                            amount: rebateAmount
-                        });
-
-                        processLogs.push(`  ⚠ 部分填充: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} < 返利: ¥${formatCurrency(rebateAmount)})`);
-
-                        // 更新原始记录的推荐落地车型和时间
-                        if (originalRebate) {
-                            originalRebate.recommendedVehicles = selectedVehicle.code;
-                            originalRebate.recommendedTime = `2026.${quarter}`;
-                        }
-                        allocated = true;
                     }
                 }
 
