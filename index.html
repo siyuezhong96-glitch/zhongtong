@@ -549,6 +549,7 @@
         <div class="section">
             <h2 class="section-title">5. 返利分配结果（智能调配）</h2>
             <button class="add-button" onclick="renderAllocationTable()">🔄 执行智能分配</button>
+            <button class="add-button" onclick="exportAllocationResults()" style="margin-left: 10px;">📥 导出分配结果</button>
             <div class="table-wrapper">
                 <table class="data-table" id="allocationTable">
                     <thead>
@@ -2290,6 +2291,85 @@
             } else {
                 processLogDiv.style.display = 'none';
             }
+        }
+
+        // 导出分配结果为Excel
+        function exportAllocationResults() {
+            // 先执行分配以获取最新结果
+            const allocationData = performAllocation();
+            const allocationResults = allocationData.results;
+
+            // 构建Excel数据
+            const excelData = [];
+
+            // 表头
+            const headers = [
+                '车型',
+                'Q1-原始缺口', 'Q1-分配金额', 'Q1-剩余缺口', 'Q1-单车缺口',
+                'Q2-原始缺口', 'Q2-分配金额', 'Q2-剩余缺口', 'Q2-单车缺口',
+                'Q3-原始缺口', 'Q3-分配金额', 'Q3-剩余缺口', 'Q3-单车缺口',
+                'Q4-原始缺口', 'Q4-分配金额', 'Q4-剩余缺口', 'Q4-单车缺口',
+                '合计-原始缺口', '合计-分配金额', '合计-剩余缺口'
+            ];
+            excelData.push(headers);
+
+            // 数据行
+            vehicles.forEach(vehicle => {
+                const row = [vehicle.name];
+
+                let vehicleOriginal = 0, vehicleAllocated = 0;
+
+                quarters.forEach(quarter => {
+                    const data = allocationResults[vehicle.code][quarter];
+                    const remaining = data.original - data.allocated;
+
+                    // 获取量纲，计算单车缺口
+                    const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                    const dimension = dimensionInput && dimensionInput.value ? parseFloat(dimensionInput.value) : 0;
+                    const perUnitGap = dimension > 0 ? remaining / dimension : 0;
+
+                    // 添加该季度的4列数据
+                    row.push(
+                        data.original,
+                        data.allocated,
+                        remaining,
+                        perUnitGap
+                    );
+
+                    vehicleOriginal += data.original;
+                    vehicleAllocated += data.allocated;
+                });
+
+                const vehicleRemaining = vehicleOriginal - vehicleAllocated;
+
+                // 添加合计列
+                row.push(vehicleOriginal, vehicleAllocated, vehicleRemaining);
+
+                excelData.push(row);
+            });
+
+            // 创建工作簿
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+            // 设置列宽
+            ws['!cols'] = [
+                { wch: 10 },  // 车型
+                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },  // Q1
+                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },  // Q2
+                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },  // Q3
+                { wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 15 },  // Q4
+                { wch: 15 }, { wch: 15 }, { wch: 15 }   // 合计
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, '分配结果');
+
+            // 生成文件名（带时间戳）
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+            const filename = `返利分配结果_${timestamp}.xlsx`;
+
+            // 下载文件
+            XLSX.writeFile(wb, filename);
         }
 
         // ===== 统计汇总 =====
