@@ -1823,17 +1823,17 @@
 
         // 检测可用的API端点
         async function detectApiEndpoint() {
-            // API端点优先级列表
+            // API端点优先级列表（本地优先）
             const endpoints = [
-                '/api/parse-feishu',  // Vercel部署的API
-                'http://localhost:3000/parse-feishu'  // 本地服务器
+                'http://localhost:3000/parse-feishu',  // 本地服务器
+                '/api/parse-feishu'  // Vercel部署的API
             ];
 
             for (const endpoint of endpoints) {
                 try {
                     // 快速测试连接
                     const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+                    const timeoutId = setTimeout(() => controller.abort(), 1000);
 
                     await fetch(endpoint, {
                         method: 'OPTIONS',
@@ -1841,8 +1841,10 @@
                     });
 
                     clearTimeout(timeoutId);
+                    console.log('✅ 检测到可用API:', endpoint);
                     return endpoint;
                 } catch (e) {
+                    console.log('❌ API不可用:', endpoint, e.message);
                     continue;
                 }
             }

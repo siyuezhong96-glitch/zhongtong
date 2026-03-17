@@ -8,6 +8,16 @@ echo ║   飞书表格解析服务器 - 启动程序          ║
 echo ╚═══════════════════════════════════════════╝
 echo.
 
+:: 检查Python3是否安装
+python3 --version >nul 2>&1
+if %errorlevel% == 0 (
+    echo [✓] 检测到 Python3
+    echo [*] 正在启动 Python 服务器...
+    echo.
+    python3 feishu-parser.py
+    goto :end
+)
+
 :: 检查Python是否安装
 python --version >nul 2>&1
 if %errorlevel% == 0 (
