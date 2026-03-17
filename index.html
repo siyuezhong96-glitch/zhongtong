@@ -444,9 +444,38 @@
             </div>
         </div>
 
-        <!-- 模块2: 返利情况 -->
+        <!-- 模块2: 车型代表输入机会点 -->
         <div class="section">
-            <h2 class="section-title">2. 返利情况</h2>
+            <h2 class="section-title">2. 车型代表输入机会点</h2>
+            <div style="margin-bottom: 15px;">
+                <button class="add-button" onclick="downloadOpportunityTemplate()">📥 下载机会点模板</button>
+                <button class="add-button" onclick="document.getElementById('opportunityFileInput').click()">📤 导入机会点数据</button>
+                <button class="add-button" onclick="clearAllOpportunityData()" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);">🗑️ 清除所有机会点数据</button>
+                <input type="file" id="opportunityFileInput" accept=".xlsx,.xls" style="display:none;" onchange="importOpportunityData(event)">
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="opportunityTable">
+                    <!-- 动态生成 -->
+                </table>
+            </div>
+        </div>
+
+        <!-- 模块3: 最终缺口汇总 -->
+        <div class="section">
+            <h2 class="section-title">3. 最终缺口汇总（当前缺口 + 机会点）</h2>
+            <div style="margin-bottom: 15px;">
+                <button class="add-button" onclick="refreshFinalGap()" style="background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);">🔄 刷新计算</button>
+            </div>
+            <div class="table-wrapper">
+                <table class="data-table" id="finalGapTable">
+                    <!-- 动态生成 -->
+                </table>
+            </div>
+        </div>
+
+        <!-- 模块4: 返利情况 -->
+        <div class="section">
+            <h2 class="section-title">4. 返利情况</h2>
             <div style="margin-bottom: 15px;">
                 <button class="add-button" onclick="addRebateRow()">➕ 添加返利记录</button>
                 <button class="add-button" onclick="downloadRebateTemplate()">📥 下载返利模板</button>
@@ -491,9 +520,9 @@
             </div>
         </div>
 
-        <!-- 模块3: 返利分配结果 -->
+        <!-- 模块5: 返利分配结果 -->
         <div class="section">
-            <h2 class="section-title">3. 返利分配结果</h2>
+            <h2 class="section-title">5. 返利分配结果（智能调配）</h2>
             <button class="add-button" onclick="renderAllocationTable()">🔄 执行智能分配</button>
             <div class="table-wrapper">
                 <table class="data-table" id="allocationTable">
@@ -512,9 +541,19 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- 详细分配过程 -->
+            <div id="allocationProcessLog" style="margin-top: 20px; display: none;">
+                <h3 style="color: #ff1493; margin-bottom: 10px;">📋 详细分配过程</h3>
+                <div id="processLogContent" style="background: #ffffff; border: 2px solid #ffc0cb; border-radius: 6px; padding: 15px; max-height: 400px; overflow-y: auto; font-family: 'Consolas', monospace; font-size: 0.9em; line-height: 1.8;">
+                    <!-- 动态生成 -->
+                </div>
+            </div>
+
             <div style="margin-top: 15px; padding: 15px; background: #fff5f8; border-radius: 6px; border: 2px solid #ffc0cb;">
                 <h3 style="color: #ff1493; margin-bottom: 10px;">📌 分配规则说明</h3>
                 <ul style="color: #ff69b4; line-height: 1.8;">
+                    <li><strong>使用最终缺口</strong>：分配基于"最终缺口汇总"（当前指标缺口 + 机会点），而非仅当前指标缺口</li>
                     <li>缺口为负值表示指标已过达，不需要分配返利，系统将自动忽略</li>
                     <li>系统根据返利记录中的"供货车型"和"签署时间范围"自动匹配对应的缺口</li>
                     <li>每笔返利完整分配给单一车型-季度，不拆分分配</li>
@@ -1018,6 +1057,393 @@
             alert(message);
         }
 
+        // ===== 模块2: 车型代表输入机会点 =====
+
+        // 生成机会点表格
+        function generateOpportunityTable() {
+            const table = document.getElementById('opportunityTable');
+            let html = '<thead><tr><th style="width: 120px;">车型</th>';
+
+            // 表头：季度列
+            quarters.forEach(q => {
+                html += `<th style="width: 150px;">2026 ${q}</th>`;
+            });
+            html += '<th style="width: 180px;">合计</th></tr></thead><tbody>';
+
+            // 数据行：每个车型一行
+            vehicles.forEach(vehicle => {
+                html += `<tr><td class="vehicle-label">${vehicle.icon} ${vehicle.name}</td>`;
+                quarters.forEach(q => {
+                    html += `<td>
+                        <input type="number"
+                               data-vehicle="${vehicle.code}"
+                               data-quarter="${q}"
+                               placeholder="0.00"
+                               style="text-align: right;"
+                               step="0.01">
+                    </td>`;
+                });
+                html += `<td class="total-cell" id="${vehicle.code}-opportunity-total">¥0.00</td></tr>`;
+            });
+
+            // 汇总行
+            html += `<tr style="background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%); font-weight: 700;">
+                <td class="vehicle-label" style="font-size: 1.1em;">📊 总机会点汇总</td>`;
+            quarters.forEach(q => {
+                html += `<td class="total-cell" id="opportunity-summary-${q}" style="font-size: 1.05em;">¥0.00</td>`;
+            });
+            html += `<td class="total-cell" id="opportunity-summary-total" style="font-size: 1.1em; color: #ff1493;">¥0.00</td></tr>`;
+
+            html += '</tbody>';
+            table.innerHTML = html;
+
+            // 添加事件监听
+            document.querySelectorAll('#opportunityTable input').forEach(input => {
+                input.addEventListener('input', function() {
+                    const vehicle = this.dataset.vehicle;
+                    const quarter = this.dataset.quarter;
+                    const value = this.value;
+
+                    // 保存数据
+                    saveOpportunityData(vehicle, quarter, value);
+
+                    // 更新汇总
+                    updateOpportunitySummary();
+
+                    // 自动刷新最终缺口
+                    refreshFinalGap();
+                });
+            });
+        }
+
+        // 保存机会点数据
+        function saveOpportunityData(vehicle, quarter, value) {
+            const key = `opportunity_${vehicle}_${quarter}`;
+            localStorage.setItem(key, value);
+        }
+
+        // 加载机会点数据
+        function loadOpportunityData() {
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    const key = `opportunity_${vehicle.code}_${quarter}`;
+                    const value = localStorage.getItem(key);
+                    if (value) {
+                        const input = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                        if (input) {
+                            input.value = value;
+                        }
+                    }
+                });
+            });
+            updateOpportunitySummary();
+        }
+
+        // 更新机会点汇总
+        function updateOpportunitySummary() {
+            let grandTotal = 0;
+
+            // 更新每个车型的合计
+            vehicles.forEach(vehicle => {
+                let vehicleTotal = 0;
+                quarters.forEach(quarter => {
+                    const input = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input && input.value) {
+                        vehicleTotal += parseFloat(input.value);
+                    }
+                });
+
+                const totalElement = document.getElementById(`${vehicle.code}-opportunity-total`);
+                if (totalElement) {
+                    totalElement.textContent = `¥${formatCurrency(vehicleTotal)}`;
+                }
+                grandTotal += vehicleTotal;
+            });
+
+            // 更新每个季度的汇总
+            quarters.forEach(quarter => {
+                let quarterTotal = 0;
+                vehicles.forEach(vehicle => {
+                    const input = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input && input.value) {
+                        quarterTotal += parseFloat(input.value);
+                    }
+                });
+
+                const summaryElement = document.getElementById(`opportunity-summary-${quarter}`);
+                if (summaryElement) {
+                    summaryElement.textContent = `¥${formatCurrency(quarterTotal)}`;
+                }
+            });
+
+            // 更新总计
+            const summaryTotalElement = document.getElementById('opportunity-summary-total');
+            if (summaryTotalElement) {
+                summaryTotalElement.textContent = `¥${formatCurrency(grandTotal)}`;
+            }
+        }
+
+        // 下载机会点模板
+        function downloadOpportunityTemplate() {
+            const data = [['车型', '2026 Q1', '2026 Q2', '2026 Q3', '2026 Q4']];
+
+            vehicles.forEach(vehicle => {
+                data.push([vehicle.name, 0, 0, 0, 0]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [
+                { wch: 10 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 15 },
+                { wch: 15 }
+            ];
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, '机会点');
+            XLSX.writeFile(wb, '机会点模板.xlsx');
+        }
+
+        // 导入机会点数据
+        function importOpportunityData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    processOpportunityData(jsonData);
+                } catch (error) {
+                    alert('导入失败：' + error.message);
+                    console.error('导入错误:', error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+            event.target.value = '';
+        }
+
+        // 处理机会点数据
+        function processOpportunityData(jsonData) {
+            if (!jsonData || jsonData.length === 0) {
+                alert('文件为空，请检查文件内容！');
+                return;
+            }
+
+            let startIndex = 0;
+            const firstRow = jsonData[0];
+            if (firstRow && firstRow[0] === '车型') {
+                startIndex = 1;
+            }
+
+            let importCount = 0;
+            for (let i = startIndex; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length < 2) continue;
+
+                const vehicleCode = String(row[0] || '').trim();
+                const vehicle = vehicles.find(v => v.code === vehicleCode || v.name === vehicleCode);
+
+                if (!vehicle) continue;
+
+                quarters.forEach((quarter, idx) => {
+                    const value = row[idx + 1];
+                    const input = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+
+                    if (input) {
+                        if (value === undefined || value === '' || value === null) {
+                            input.value = '';
+                            saveOpportunityData(vehicle.code, quarter, '');
+                        } else {
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue)) {
+                                input.value = numValue;
+                                saveOpportunityData(vehicle.code, quarter, numValue);
+                            }
+                        }
+                    }
+                });
+
+                importCount++;
+            }
+
+            updateOpportunitySummary();
+            refreshFinalGap();
+            alert(`成功导入 ${importCount} 行机会点数据！`);
+        }
+
+        // 清除所有机会点数据
+        function clearAllOpportunityData() {
+            if (!confirm('确定要清除所有机会点数据吗？此操作不可恢复！')) {
+                return;
+            }
+
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    const key = `opportunity_${vehicle.code}_${quarter}`;
+                    localStorage.removeItem(key);
+
+                    const input = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    if (input) input.value = '';
+                });
+            });
+
+            updateOpportunitySummary();
+            refreshFinalGap();
+            alert('所有机会点数据已清除！');
+        }
+
+        // ===== 模块3: 最终缺口汇总 =====
+
+        // 生成最终缺口表格
+        function generateFinalGapTable() {
+            const table = document.getElementById('finalGapTable');
+            let html = '<thead><tr><th style="width: 120px;">车型</th><th style="width: 250px;">指标类型</th>';
+
+            quarters.forEach(q => {
+                html += `<th style="width: 150px;">2026 ${q}</th>`;
+            });
+            html += '<th style="width: 180px;">合计</th></tr></thead><tbody>';
+
+            vehicles.forEach(vehicle => {
+                // 第一行：量纲
+                html += `<tr><td class="vehicle-label" rowspan="3" style="vertical-align: middle;">${vehicle.icon} ${vehicle.name}</td>
+                    <td style="background: #fff9f0; font-weight: 600; color: #ff69b4;">量纲</td>`;
+                quarters.forEach(q => {
+                    html += `<td class="total-cell" id="final-${vehicle.code}-${q}-dimension">0</td>`;
+                });
+                html += `<td class="total-cell" id="final-${vehicle.code}-dimension-total">0</td></tr>`;
+
+                // 第二行：单车维度缺口
+                html += `<tr><td style="background: #f0f8ff; font-weight: 600; color: #ff69b4;">单车维度缺口（元/车）</td>`;
+                quarters.forEach(q => {
+                    html += `<td class="total-cell" id="final-${vehicle.code}-${q}-indicator">¥0.00</td>`;
+                });
+                html += `<td class="total-cell" id="final-${vehicle.code}-indicator-total">¥0.00</td></tr>`;
+
+                // 第三行：最终缺口（自动计算）
+                html += `<tr><td style="background: #ffe4f0; font-weight: 600; color: #ff1493;">最终缺口（自动计算）</td>`;
+                quarters.forEach(q => {
+                    html += `<td class="total-cell" id="final-${vehicle.code}-${q}-gap" style="background: #fff5f8; font-weight: 600; color: #ff1493;">¥0.00</td>`;
+                });
+                html += `<td class="total-cell" id="final-${vehicle.code}-gap-total" style="background: #ffe4f0; font-weight: 700; color: #ff1493;">¥0.00</td></tr>`;
+            });
+
+            // 汇总行
+            html += `<tr style="background: linear-gradient(135deg, #ffe4f0 0%, #ffd6e8 100%); font-weight: 700;">
+                <td class="vehicle-label" style="font-size: 1.1em;" colspan="2">📊 最终总缺口汇总</td>`;
+            quarters.forEach(q => {
+                html += `<td class="total-cell" id="final-summary-${q}" style="font-size: 1.05em;">¥0.00</td>`;
+            });
+            html += `<td class="total-cell" id="final-summary-total" style="font-size: 1.1em; color: #ff1493;">¥0.00</td></tr>`;
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        // 刷新最终缺口计算
+        function refreshFinalGap() {
+            vehicles.forEach(vehicle => {
+                quarters.forEach(quarter => {
+                    // 获取量纲（从指标缺口）
+                    const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                    const dimension = dimensionInput && dimensionInput.value ? parseFloat(dimensionInput.value) : 0;
+
+                    // 获取单车维度缺口（从指标缺口）
+                    const indicatorInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="indicator"]`);
+                    const indicator = indicatorInput && indicatorInput.value ? parseFloat(indicatorInput.value) : 0;
+
+                    // 获取机会点
+                    const opportunityInput = document.querySelector(`#opportunityTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"]`);
+                    const opportunity = opportunityInput && opportunityInput.value ? parseFloat(opportunityInput.value) : 0;
+
+                    // 计算最终缺口 = 量纲 × (单车维度缺口 + 机会点)
+                    const finalIndicator = indicator + opportunity;
+                    const finalGap = dimension * finalIndicator;
+
+                    // 更新显示
+                    const dimensionCell = document.getElementById(`final-${vehicle.code}-${quarter}-dimension`);
+                    if (dimensionCell) dimensionCell.textContent = dimension.toFixed(0);
+
+                    const indicatorCell = document.getElementById(`final-${vehicle.code}-${quarter}-indicator`);
+                    if (indicatorCell) indicatorCell.textContent = `¥${formatCurrency(finalIndicator)}`;
+
+                    const gapCell = document.getElementById(`final-${vehicle.code}-${quarter}-gap`);
+                    if (gapCell) gapCell.textContent = `¥${formatCurrency(finalGap)}`;
+                });
+
+                // 更新车型合计
+                updateFinalVehicleTotal(vehicle.code);
+            });
+
+            // 更新汇总行
+            updateFinalSummaryRow();
+        }
+
+        // 更新最终缺口车型合计
+        function updateFinalVehicleTotal(vehicleCode) {
+            let dimensionTotal = 0;
+            let indicatorTotal = 0;
+            let gapTotal = 0;
+
+            quarters.forEach(quarter => {
+                const dimensionCell = document.getElementById(`final-${vehicleCode}-${quarter}-dimension`);
+                if (dimensionCell) dimensionTotal += parseFloat(dimensionCell.textContent);
+
+                const indicatorCell = document.getElementById(`final-${vehicleCode}-${quarter}-indicator`);
+                if (indicatorCell) {
+                    const value = parseFloat(indicatorCell.textContent.replace(/[^0-9.-]/g, ''));
+                    if (!isNaN(value)) indicatorTotal += value;
+                }
+
+                const gapCell = document.getElementById(`final-${vehicleCode}-${quarter}-gap`);
+                if (gapCell) {
+                    const value = parseFloat(gapCell.textContent.replace(/[^0-9.-]/g, ''));
+                    if (!isNaN(value)) gapTotal += value;
+                }
+            });
+
+            const dimensionTotalElement = document.getElementById(`final-${vehicleCode}-dimension-total`);
+            if (dimensionTotalElement) dimensionTotalElement.textContent = dimensionTotal.toFixed(0);
+
+            const indicatorTotalElement = document.getElementById(`final-${vehicleCode}-indicator-total`);
+            if (indicatorTotalElement) indicatorTotalElement.textContent = `¥${formatCurrency(indicatorTotal)}`;
+
+            const gapTotalElement = document.getElementById(`final-${vehicleCode}-gap-total`);
+            if (gapTotalElement) gapTotalElement.textContent = `¥${formatCurrency(gapTotal)}`;
+        }
+
+        // 更新最终缺口汇总行
+        function updateFinalSummaryRow() {
+            let grandTotal = 0;
+
+            quarters.forEach(quarter => {
+                let quarterTotal = 0;
+                vehicles.forEach(vehicle => {
+                    const gapCell = document.getElementById(`final-${vehicle.code}-${quarter}-gap`);
+                    if (gapCell) {
+                        const value = parseFloat(gapCell.textContent.replace(/[^0-9.-]/g, ''));
+                        if (!isNaN(value) && value > 0) {
+                            quarterTotal += value;
+                        }
+                    }
+                });
+                grandTotal += quarterTotal;
+
+                const summaryElement = document.getElementById(`final-summary-${quarter}`);
+                if (summaryElement) summaryElement.textContent = `¥${formatCurrency(quarterTotal)}`;
+            });
+
+            const summaryTotalElement = document.getElementById('final-summary-total');
+            if (summaryTotalElement) summaryTotalElement.textContent = `¥${formatCurrency(grandTotal)}`;
+        }
+
         // ===== 模块2: 返利情况 =====
         let rebateData = [];
         let rebateIdCounter = 1;
@@ -1471,26 +1897,47 @@
             return '2026-01-01';
         }
 
-        // 执行智能分配（新算法：不拆分返利）
+        // 获取最终缺口值（从Module 3: 最终缺口汇总）
+        function getFinalGap(vehicle, quarter) {
+            const finalGapCell = document.getElementById(`final-${vehicle}-${quarter}-gap`);
+            if (finalGapCell) {
+                // 解析单元格内容，去掉¥和千分位逗号
+                const text = finalGapCell.textContent.replace(/¥|,/g, '');
+                const value = parseFloat(text);
+                return isNaN(value) ? 0 : value;
+            }
+            return 0;
+        }
+
+        // 执行智能分配（使用最终缺口：当前指标缺口 + 机会点）
         function performAllocation() {
+            // 详细过程日志
+            const processLogs = [];
+            processLogs.push('=== 开始执行智能分配 ===\n');
+
             // 1. 收集所有缺口数据，创建剩余缺口副本
             const remainingGaps = {};
+            processLogs.push('步骤1: 收集最终缺口数据（当前指标缺口 + 机会点）');
             vehicles.forEach(vehicle => {
                 remainingGaps[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    // 使用计算后的缺口值，负值表示过达，设为0（不需要分配）
-                    const gapAmount = calculateGap(vehicle.code, quarter);
+                    // 使用最终缺口值（包含机会点），负值表示过达，设为0（不需要分配）
+                    const gapAmount = getFinalGap(vehicle.code, quarter);
                     remainingGaps[vehicle.code][quarter] = Math.max(0, gapAmount);
+                    if (gapAmount > 0) {
+                        processLogs.push(`  ${vehicle.code} ${quarter}: ¥${formatCurrency(gapAmount)}`);
+                    }
                 });
             });
+            processLogs.push('');
 
             // 2. 用于记录分配结果
             const allocationResults = {};
             vehicles.forEach(vehicle => {
                 allocationResults[vehicle.code] = {};
                 quarters.forEach(quarter => {
-                    // 使用计算后的缺口值，负值表示过达，设为0
-                    const gapAmount = calculateGap(vehicle.code, quarter);
+                    // 使用最终缺口值（包含机会点），负值表示过达，设为0
+                    const gapAmount = getFinalGap(vehicle.code, quarter);
                     allocationResults[vehicle.code][quarter] = {
                         original: gapAmount,
                         allocated: 0,
@@ -1513,6 +1960,12 @@
                 return new Date(a.effectiveDate) - new Date(b.effectiveDate);
             });
 
+            processLogs.push('步骤2: 按提报日期排序返利记录（早的优先）');
+            sortedRebates.forEach((r, idx) => {
+                processLogs.push(`  ${idx + 1}. ${r.supplier || '未知供应商'} - ¥${formatCurrency(r.amount)} (提报日期: ${r.effectiveDate})`);
+            });
+            processLogs.push('');
+
             console.log('按提报日期排序后的返利记录:', sortedRebates.map(r => ({
                 id: r.id,
                 supplier: r.supplier,
@@ -1520,8 +1973,11 @@
                 effectiveDate: r.effectiveDate
             })));
 
+            processLogs.push('步骤3: 开始执行分配');
+            processLogs.push('');
+
             // 4. 遍历排序后的返利记录，按顺序分配
-            sortedRebates.forEach(rebate => {
+            sortedRebates.forEach((rebate, rebateIdx) => {
                 // 找到原始的返利记录（用于更新推荐结果）
                 const originalRebate = rebateData.find(r => r.id === rebate.id);
 
@@ -1557,6 +2013,9 @@
                     return;
                 }
 
+                processLogs.push(`\n返利 #${rebateIdx + 1}: ${rebate.supplier || '未知供应商'} - ¥${formatCurrency(rebateAmount)}`);
+                processLogs.push(`  可分配车型: ${rebateVehicles.join(', ')}`);
+
                 // 解析签署时间范围
                 const startQ = parseQuarter(rebate.earliestSignQuarter);
                 const endQ = parseQuarter(rebate.latestSignQuarter);
@@ -1572,6 +2031,8 @@
                     // 如果没有指定时间，默认适用所有季度
                     applicableQuarters = [...quarters];
                 }
+
+                processLogs.push(`  适用时间: ${applicableQuarters.join(', ')}`);
 
                 // 4. 按季度优先级（Q1>Q2>Q3>Q4）尝试分配
                 let allocated = false;
@@ -1606,6 +2067,8 @@
                             amount: rebateAmount
                         });
 
+                        processLogs.push(`  ✓ 成功分配: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} >= 返利: ¥${formatCurrency(rebateAmount)})`);
+
                         // 更新原始记录的推荐落地车型和时间
                         if (originalRebate) {
                             originalRebate.recommendedVehicles = selectedVehicle.code;
@@ -1622,6 +2085,8 @@
                             amount: rebateAmount
                         });
 
+                        processLogs.push(`  ⚠ 部分填充: ${selectedVehicle.code} - ${quarter} (缺口: ¥${formatCurrency(selectedVehicle.gap)} < 返利: ¥${formatCurrency(rebateAmount)})`);
+
                         // 更新原始记录的推荐落地车型和时间
                         if (originalRebate) {
                             originalRebate.recommendedVehicles = selectedVehicle.code;
@@ -1633,21 +2098,26 @@
 
                 // 如果没有分配成功（没有匹配的缺口），标记为未分配
                 if (!allocated && originalRebate) {
+                    processLogs.push(`  ✗ 未分配: 无匹配的缺口`);
                     originalRebate.recommendedVehicles = '无匹配缺口';
                     originalRebate.recommendedTime = '-';
                 }
             });
 
+            processLogs.push('\n=== 分配完成 ===');
+
             // 保存更新后的返利数据（包含推荐落地车型和时间）
             saveRebateData();
             renderRebateTable();
 
-            return allocationResults;
+            return { results: allocationResults, logs: processLogs };
         }
 
         // 渲染分配结果表格
         function renderAllocationTable() {
-            const allocationResults = performAllocation();
+            const allocationData = performAllocation();
+            const allocationResults = allocationData.results;
+            const processLogs = allocationData.logs;
             const tbody = document.getElementById('allocationTableBody');
 
             let html = '';
@@ -1692,15 +2162,42 @@
             });
 
             tbody.innerHTML = html;
+
+            // 显示详细分配过程
+            const processLogDiv = document.getElementById('allocationProcessLog');
+            const processLogContent = document.getElementById('processLogContent');
+            if (processLogs && processLogs.length > 0) {
+                processLogContent.innerHTML = processLogs.map(log => {
+                    // 对不同类型的日志应用不同样式
+                    if (log.includes('===')) {
+                        return `<div style="color: #ff1493; font-weight: bold; margin: 10px 0;">${log}</div>`;
+                    } else if (log.includes('步骤')) {
+                        return `<div style="color: #ff69b4; font-weight: bold; margin: 8px 0;">${log}</div>`;
+                    } else if (log.includes('✓ 成功')) {
+                        return `<div style="color: #28a745; padding-left: 20px;">${log}</div>`;
+                    } else if (log.includes('⚠ 部分')) {
+                        return `<div style="color: #ffa500; padding-left: 20px;">${log}</div>`;
+                    } else if (log.includes('✗ 未分配')) {
+                        return `<div style="color: #dc3545; padding-left: 20px;">${log}</div>`;
+                    } else if (log.includes('返利 #')) {
+                        return `<div style="color: #ff1493; font-weight: bold; margin-top: 8px;">${log}</div>`;
+                    } else {
+                        return `<div style="color: #666; padding-left: 20px;">${log}</div>`;
+                    }
+                }).join('');
+                processLogDiv.style.display = 'block';
+            } else {
+                processLogDiv.style.display = 'none';
+            }
         }
 
         // ===== 统计汇总 =====
         function updateSummary() {
-            // 计算总缺口（使用计算后的缺口值，负值表示过达，不计入缺口统计）
+            // 计算总缺口（使用最终缺口值：当前指标缺口 + 机会点，负值表示过达，不计入缺口统计）
             let totalGap = 0;
             vehicles.forEach(vehicle => {
                 quarters.forEach(quarter => {
-                    const gap = calculateGap(vehicle.code, quarter);
+                    const gap = getFinalGap(vehicle.code, quarter);
                     // 只累加正值缺口（负值表示过达，不需要返利）
                     totalGap += Math.max(0, gap);
                 });
@@ -1731,6 +2228,10 @@
         window.addEventListener('DOMContentLoaded', function() {
             generateGapTable();
             loadGapData();
+            generateOpportunityTable();
+            loadOpportunityData();
+            generateFinalGapTable();
+            refreshFinalGap();
             loadRebateData();
             updateSummary();
         });
