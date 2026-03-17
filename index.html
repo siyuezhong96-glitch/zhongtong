@@ -2224,6 +2224,11 @@
                     const remaining = data.original - data.allocated;
                     const fillRate = data.original > 0 ? (data.allocated / data.original * 100).toFixed(1) : 0;
 
+                    // 获取量纲，计算单车缺口
+                    const dimensionInput = document.querySelector(`#gapTable [data-vehicle="${vehicle.code}"][data-quarter="${quarter}"][data-type="dimension"]`);
+                    const dimension = dimensionInput && dimensionInput.value ? parseFloat(dimensionInput.value) : 0;
+                    const perUnitGap = dimension > 0 ? remaining / dimension : 0;
+
                     // 根据填充情况设置背景色
                     let bgColor = '#fff5f8'; // 默认浅粉色
                     if (fillRate >= 100) {
@@ -2238,6 +2243,7 @@
                         <div style="line-height: 1.6;"><strong>原始:</strong> ¥${formatCurrency(data.original)}</div>
                         <div style="color: #28a745; line-height: 1.6;"><strong>分配:</strong> ¥${formatCurrency(data.allocated)}</div>
                         <div style="color: ${remaining > 0 ? '#dc3545' : '#28a745'}; line-height: 1.6;"><strong>剩余:</strong> ¥${formatCurrency(remaining)}</div>
+                        <div style="color: ${perUnitGap > 0 ? '#dc3545' : '#28a745'}; line-height: 1.6; font-size: 0.85em; margin-top: 2px;"><strong>单车缺口:</strong> ¥${formatCurrency(perUnitGap)}</div>
                     </td>`;
                 });
 
