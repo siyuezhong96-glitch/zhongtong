@@ -403,6 +403,37 @@
             border-left: 3px solid #ff69b4;
         }
 
+        .step details {
+            margin-top: 8px;
+        }
+
+        .step summary {
+            cursor: pointer;
+            color: #1890ff;
+            font-size: 0.9em;
+            padding: 5px 0;
+            user-select: none;
+            list-style: none;
+        }
+
+        .step summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .step summary::before {
+            content: '▶ ';
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .step details[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        .step details[open] summary {
+            margin-bottom: 8px;
+        }
+
         .step strong {
             color: #ff1493;
             display: block;
@@ -434,41 +465,61 @@
             <div class="guide-content">
                 <div class="step">
                     <strong>第一步：输入当前指标缺口</strong>
-                    <p>方式1：直接在表格中输入各车型各季度的量纲和单车维度缺口</p>
-                    <p>方式2：下载缺口模板 → 填写数据 → 导入缺口数据</p>
-                    <p>💡 单车维度缺口为正值表示缺口，负值表示已过达</p>
+                    <p>直接在表格中输入或通过模板导入</p>
+                    <details>
+                        <summary>查看详细说明</summary>
+                        <p>方式1：直接在表格中输入各车型各季度的量纲和单车维度缺口</p>
+                        <p>方式2：下载缺口模板 → 填写数据 → 导入缺口数据</p>
+                        <p>💡 单车维度缺口为正值表示缺口，负值表示已过达</p>
+                    </details>
                 </div>
                 <div class="step">
                     <strong>第二步：输入机会点（可选）</strong>
-                    <p>车型代表可输入额外的机会点金额，系统会自动计算最终缺口（当前缺口 + 机会点）</p>
-                    <p>支持直接输入或通过模板批量导入</p>
+                    <p>车型代表可输入额外机会点</p>
+                    <details>
+                        <summary>查看详细说明</summary>
+                        <p>车型代表可输入额外的机会点金额，系统会自动计算最终缺口（当前缺口 + 机会点）</p>
+                        <p>支持直接输入或通过模板批量导入</p>
+                    </details>
                 </div>
                 <div class="step">
                     <strong>第三步：导入返利记录</strong>
-                    <p>下载返利模板 → 填写返利信息（21个字段）→ 导入返利数据</p>
-                    <p>📋 关键字段说明：</p>
-                    <ul style="margin: 5px 0; padding-left: 20px; line-height: 1.6;">
-                        <li><strong>供应商供货车型*</strong>：填写车型代码，多个用逗号分隔（如：X01,X02,W04）</li>
-                        <li><strong>车型映射</strong>：支持25款/26款自动映射（X11→X01, X13→X03, W04B→W04等）</li>
-                        <li><strong>紧急落地标识</strong>：填写 * 表示该笔返利需要优先分配</li>
-                        <li><strong>签署时间</strong>：格式为 2026.Q1 或 2026.Q2，用于确定返利适用的季度范围</li>
-                    </ul>
+                    <p>下载模板填写21个字段后导入</p>
+                    <details>
+                        <summary>查看详细说明</summary>
+                        <p>下载返利模板 → 填写返利信息（21个字段）→ 导入返利数据</p>
+                        <p>📋 关键字段说明：</p>
+                        <ul style="margin: 5px 0; padding-left: 20px; line-height: 1.6;">
+                            <li><strong>供应商供货车型*</strong>：填写车型代码，多个用逗号分隔（如：X01,X02,W04）</li>
+                            <li><strong>车型映射</strong>：支持25款/26款自动映射（X11→X01, X13→X03, W04B→W04等）</li>
+                            <li><strong>紧急落地标识</strong>：填写 * 表示该笔返利需要优先分配</li>
+                            <li><strong>签署时间</strong>：格式为 2026.Q1 或 2026.Q2，用于确定返利适用的季度范围</li>
+                        </ul>
+                    </details>
                 </div>
                 <div class="step">
                     <strong>第四步：执行智能分配</strong>
-                    <p>点击"执行智能分配"按钮，系统采用两阶段分配策略：</p>
-                    <ul style="margin: 5px 0; padding-left: 20px; line-height: 1.6;">
-                        <li><strong>阶段1（优先）</strong>：优先满足有缺口的车型，选择剩余缺口最大的车型分配</li>
-                        <li><strong>阶段2（兜底）</strong>：所有车型都过达时，选择分配后单车过达金额最小的车型，确保各车型过达程度均衡</li>
-                        <li><strong>优先级</strong>：紧急落地标识（*）的返利优先分配，其次按提报日期排序</li>
-                    </ul>
+                    <p>系统采用两阶段分配策略自动分配</p>
+                    <details>
+                        <summary>查看详细说明</summary>
+                        <p>点击"执行智能分配"按钮，系统采用两阶段分配策略：</p>
+                        <ul style="margin: 5px 0; padding-left: 20px; line-height: 1.6;">
+                            <li><strong>阶段1（优先）</strong>：优先满足有缺口的车型，选择剩余缺口最大的车型分配</li>
+                            <li><strong>阶段2（兜底）</strong>：所有车型都过达时，选择分配后单车过达金额最小的车型，确保各车型过达程度均衡</li>
+                            <li><strong>优先级</strong>：紧急落地标识（*）的返利优先分配，其次按提报日期排序</li>
+                        </ul>
+                    </details>
                 </div>
                 <div class="step">
                     <strong>第五步：查看和导出结果</strong>
-                    <p>✅ 在返利表格中查看【推荐落地车型】和【推荐落地时间】</p>
-                    <p>✅ 在分配结果表格中查看各车型缺口填补情况（含原始缺口、分配金额、剩余缺口、<strong>单车缺口</strong>）</p>
-                    <p>✅ 点击"导出分配结果"按钮，下载完整的Excel分配报表</p>
-                    <p>✅ 点击"导出返利数据"按钮，导出包含推荐结果的返利清单（23列）</p>
+                    <p>查看推荐结果并导出Excel报表</p>
+                    <details>
+                        <summary>查看详细说明</summary>
+                        <p>✅ 在返利表格中查看【推荐落地车型】和【推荐落地时间】</p>
+                        <p>✅ 在分配结果表格中查看各车型缺口填补情况（含原始缺口、分配金额、剩余缺口、<strong>单车缺口</strong>）</p>
+                        <p>✅ 点击"导出分配结果"按钮，下载完整的Excel分配报表</p>
+                        <p>✅ 点击"导出返利数据"按钮，导出包含推荐结果的返利清单（23列）</p>
+                    </details>
                 </div>
             </div>
         </div>
